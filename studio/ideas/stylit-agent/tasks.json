@@ -1,7 +1,7 @@
 {
   "product": "stylit",
   "idea": "stylit-agent",
-  "plan_version": 9,
+  "plan_version": 10,
   "merge_order": [
     "0a",
     "0b",
@@ -9,11 +9,12 @@
     "2",
     "3",
     "4",
-    "6",
     "5",
     "7",
+    "6",
     "8",
-    "9"
+    "9",
+    "10"
   ],
   "tasks": [
     {
@@ -36,7 +37,11 @@
       "acceptance": [
         "CI: node tests/stylist/agentsRules.test.cjs verifies one root AGENTS.md, canonical exec.md link, no duplicate vision or archive reads, and rules-only format."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "allowed_files": [
+        "AGENTS.md",
+        "tests/stylist/agentsRules.test.cjs"
+      ]
     },
     {
       "id": "0b",
@@ -65,10 +70,212 @@
         "CI: node tests/stylist/visionVersion.test.cjs tests matching/missing/stale PR-body versions using a mocked canonical source; workflow runs checker on pull_request and fails a mismatch against current studio main.",
         "CI: current canonical vision is v2; reject coding PR bodies declaring v1, absent or unrecognized vision versions."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "allowed_files": [
+        ".github/workflows/vision-version.yml",
+        "scripts/check-vision-version.cjs",
+        "tests/stylist/visionVersion.test.cjs"
+      ]
     },
     {
       "id": "1",
+      "title": "Full MVPStyli brand revamp: shared tokens, unique motions and safe existing screens",
+      "goal": "FIRST implementation task: build Inter/white-first/violet/lavender brand theme and reusable card, button, chip, photo and floating five-tab navigation components; then apply them to EVERY safe existing screen in the explicit allowlist. Each approved meaningful action has its own <1s unique, nonblocking animation; utility controls get only native iOS feedback. No PR4 file edits. Record protected screen coverage gaps for later reconciliation after PR4 merges. Website separate later.",
+      "edits": [
+        "lib/designSystem.js",
+        "lib/stylitBrandTokens.js",
+        "lib/stylitMotion.ts",
+        "components/BrandSurface.tsx",
+        "components/BrandButton.tsx",
+        "components/BrandChip.tsx",
+        "components/BrandCard.tsx",
+        "components/BrandPhoto.tsx",
+        "components/BrandNav.tsx",
+        "components/StylitAnimationMoments.tsx",
+        "components/BottomBar.js",
+        "components/Header.tsx",
+        "components/Glass.tsx",
+        "components/Avatar.js",
+        "components/Banner.js",
+        "components/ColorPickerModal.js",
+        "components/PhotoGuidelinesModal.js",
+        "components/PhotoGuidelinesScreen.js",
+        "components/FaceCropScreen.js",
+        "components/AskAISheet.js",
+        "screens/AccountScreen.js",
+        "screens/AdminGarmentsScreen.js",
+        "screens/AuthScreen.js",
+        "screens/ChatScreen.js",
+        "screens/Inbox.js",
+        "screens/PodGuest.js",
+        "screens/PodLive.js",
+        "screens/PodRecap.js",
+        "screens/PodsHome.js",
+        "screens/PodsScreen.js",
+        "screens/ProductScreen.js",
+        "screens/StyleCraftScreen.js",
+        "screens/TryOnResultScreen.js",
+        "screens/UserProfileScreen.js",
+        "tests/brand/tokens.test.cjs",
+        "tests/brand/screenCoverage.test.cjs",
+        "tests/brand/motionPolicy.test.cjs",
+        "docs/stylist/brand-screen-coverage.md"
+      ],
+      "uses": [
+        "studio/ideas/stylit-agent/dev.md (approved design kit, read-only)",
+        "studio/ideas/stylit-agent/exec.md (v2, read-only)",
+        "App.js (PR4-owned, read-only for route inventory)",
+        "screens/StyleVaultScreen.js (PR4-owned, read-only)",
+        "lib/tryon.ts (PR4-owned, read-only)",
+        "lib/productApi.js (PR4-owned, read-only)",
+        "docs/stylist/shop-map.md (future task, not required for this task)"
+      ],
+      "allowed_files": [
+        "lib/designSystem.js",
+        "lib/stylitBrandTokens.js",
+        "lib/stylitMotion.ts",
+        "components/BrandSurface.tsx",
+        "components/BrandButton.tsx",
+        "components/BrandChip.tsx",
+        "components/BrandCard.tsx",
+        "components/BrandPhoto.tsx",
+        "components/BrandNav.tsx",
+        "components/StylitAnimationMoments.tsx",
+        "components/BottomBar.js",
+        "components/Header.tsx",
+        "components/Glass.tsx",
+        "components/Avatar.js",
+        "components/Banner.js",
+        "components/ColorPickerModal.js",
+        "components/PhotoGuidelinesModal.js",
+        "components/PhotoGuidelinesScreen.js",
+        "components/FaceCropScreen.js",
+        "components/AskAISheet.js",
+        "screens/AccountScreen.js",
+        "screens/AdminGarmentsScreen.js",
+        "screens/AuthScreen.js",
+        "screens/ChatScreen.js",
+        "screens/Inbox.js",
+        "screens/PodGuest.js",
+        "screens/PodLive.js",
+        "screens/PodRecap.js",
+        "screens/PodsHome.js",
+        "screens/PodsScreen.js",
+        "screens/ProductScreen.js",
+        "screens/StyleCraftScreen.js",
+        "screens/TryOnResultScreen.js",
+        "screens/UserProfileScreen.js",
+        "tests/brand/tokens.test.cjs",
+        "tests/brand/screenCoverage.test.cjs",
+        "tests/brand/motionPolicy.test.cjs",
+        "docs/stylist/brand-screen-coverage.md"
+      ],
+      "files": [
+        "lib/designSystem.js",
+        "lib/stylitBrandTokens.js",
+        "lib/stylitMotion.ts",
+        "components/BrandSurface.tsx",
+        "components/BrandButton.tsx",
+        "components/BrandChip.tsx",
+        "components/BrandCard.tsx",
+        "components/BrandPhoto.tsx",
+        "components/BrandNav.tsx",
+        "components/StylitAnimationMoments.tsx",
+        "components/BottomBar.js",
+        "components/Header.tsx",
+        "components/Glass.tsx",
+        "components/Avatar.js",
+        "components/Banner.js",
+        "components/ColorPickerModal.js",
+        "components/PhotoGuidelinesModal.js",
+        "components/PhotoGuidelinesScreen.js",
+        "components/FaceCropScreen.js",
+        "components/AskAISheet.js",
+        "screens/AccountScreen.js",
+        "screens/AdminGarmentsScreen.js",
+        "screens/AuthScreen.js",
+        "screens/ChatScreen.js",
+        "screens/Inbox.js",
+        "screens/PodGuest.js",
+        "screens/PodLive.js",
+        "screens/PodRecap.js",
+        "screens/PodsHome.js",
+        "screens/PodsScreen.js",
+        "screens/ProductScreen.js",
+        "screens/StyleCraftScreen.js",
+        "screens/TryOnResultScreen.js",
+        "screens/UserProfileScreen.js",
+        "tests/brand/tokens.test.cjs",
+        "tests/brand/screenCoverage.test.cjs",
+        "tests/brand/motionPolicy.test.cjs",
+        "docs/stylist/brand-screen-coverage.md",
+        "studio/ideas/stylit-agent/dev.md (approved design kit, read-only)",
+        "studio/ideas/stylit-agent/exec.md (v2, read-only)",
+        "App.js (PR4-owned, read-only for route inventory)",
+        "screens/StyleVaultScreen.js (PR4-owned, read-only)",
+        "lib/tryon.ts (PR4-owned, read-only)",
+        "lib/productApi.js (PR4-owned, read-only)",
+        "docs/stylist/shop-map.md (future task, not required for this task)"
+      ],
+      "depends_on": [
+        "0b"
+      ],
+      "status": "proposed",
+      "approval": "Approved by owner 2026-11-10, 12:23 PM PT (visual kit); motion correction 12:24 PM PT; order/Task 1 12:29 PM PT",
+      "protected_files_forbidden": [
+        ".gitignore",
+        "App.js",
+        "api/_lib/googleHttpTransport.ts",
+        "api/_lib/googleTryOn.ts",
+        "api/_lib/pngCompleteness.ts",
+        "api/_lib/synchronousTryOn.ts",
+        "api/_lib/tryOnBindings.ts",
+        "api/_lib/tryOnHistory.ts",
+        "api/_lib/tryOnOrchestrator.ts",
+        "api/_lib/tryOnProvider.ts",
+        "api/_lib/tryOnRoutes.ts",
+        "api/delete-account/index.ts",
+        "api/tryon/[id].ts",
+        "api/tryon/history-visibility.ts",
+        "api/tryon/history.ts",
+        "api/tryon/index.ts",
+        "docs/nano-banana/INTEGRATION_PLAN.md",
+        "lib/base64.d.ts",
+        "lib/localImageUpload.ts",
+        "lib/migrateReplicateImages.ts",
+        "lib/productApi.js",
+        "lib/tryOnHistory.ts",
+        "lib/tryon.ts",
+        "lib/tryonClient.ts",
+        "lib/tryonTestPolicy.ts",
+        "lib/upload.ts",
+        "screens/StyleVaultScreen.js",
+        "scripts/local-tryon-server.ts",
+        "scripts/migrations/20261031_server_only_try_on_history_writes.sql",
+        "scripts/migrations/20261105_current_user_image_ownership_rpc.sql"
+      ],
+      "external_dependencies": [
+        {
+          "repo": "killbill2792/MVPStyli",
+          "pull_request": 4,
+          "require": "Task 1 must never edit PR4 changed files regardless of merge status; protected local styling reconciled only in later tasks after PR4 merge; direct work may be incomplete until then"
+        }
+      ],
+      "allowed_file_policy": "Only paths in allowed_files may be written in Task 1; any new path or a PR #4 file is prohibited. Existing safe files may receive presentation-only changes; data, products, try_on_history and try-on logic must not change.",
+      "website": "Defer to separate future website design/revamp task with owner approval.",
+      "acceptance": [
+        "CI: node tests/brand/tokens.test.cjs verifies Inter/SF Pro Display, sentence case, exact approved hex tokens, type sizes, radii, neutral photo backgrounds, CTA gradient limited to main CTA, and 393x852 reference snapshot.",
+        "CI: five app bottom-nav items Home/Explore/Try On/Pods/Profile in floating 366x64 radius-32 pill with 20–22 icons and #E9DFFF active indicator, without custom tab animation; Stylist sheet has a separate exact four-chip set.",
+        "CI: all named safe existing screen paths in allowed_files adopt shared tokens/components for presentation; screenCoverage.test.cjs produces audit matrix for each existing screen and explicitly marks PR4-owned App.js/StyleVaultScreen and protected logic as deferred (not greenwashed as completed).",
+        "CI: node tests/brand/motionPolicy.test.cjs verifies each of 15 approved action types has its own unique animation key and meaningful rationale, each cycle <1000 ms, nonblocking, no global press-bounce or shared generic celebration; no unsupported extra action animations.",
+        "CI: back/close/edit/settings/menus/textfields/tabs/utility controls have no custom animations; Reduce Motion disables effect and prevents confetti/shimmer while preserving state and content; haptics optional and safe.",
+        "CI: try-on keeps user photo visible with sub-second shimmer/scan cycles and separate <1s top-down reveal, no blank spinner, fake progress or client history writes; vote effects use real vote counts; no fake streaks.",
+        "CI: git diff for task1 contains only allowed_files, and has ZERO overlap with PR4 changed files (including App.js, screens/StyleVaultScreen.js, lib/tryon.ts, lib/productApi.js, lib/upload.ts, APIs, migrations); no modifications to try_on_history or products path.",
+        "CI: future website work is not changed. Task1 includes a factual deferred-coverage note listing protected screens requiring post-PR4 integration."
+      ]
+    },
+    {
+      "id": "2",
       "title": "Map Shop, garments and routes",
       "goal": "Record every Shop reader, catalog endpoint and cross-route dependency before removing UI.",
       "edits": [
@@ -94,15 +301,20 @@
         "screens/StyleVaultScreen.js"
       ],
       "depends_on": [
-        "0b"
+        "1"
       ],
       "acceptance": [
-        "CI: node tests/stylist/shopMap.test.cjs checks documented routes, product-detail links, garment and size dependencies against source."
+        "CI: node tests/stylist/shopMap.test.cjs checks documented routes, product-detail links, garment and size dependencies against source.",
+        "CI/Codex P2: task 2 (old task 1) explicitly allows tests/stylist/shopMap.test.cjs in edits AND allowed_files; test file is writable and demonstrably part of this PR's approved scope."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "allowed_files": [
+        "docs/stylist/shop-map.md",
+        "tests/stylist/shopMap.test.cjs"
+      ]
     },
     {
-      "id": "2",
+      "id": "3",
       "title": "Final four-chip outfit-first Stylist shell",
       "goal": "Screenshot-based hero/Current Outfit/AI Stylist sheet; exactly four chips Today's look, Style my closet, Find & buy, Elevate. No Mix & Match/Color Analysis/Style Advice/More Looks chips and no new primary screen. History behind three-dot menu and one conversation.",
       "edits": [
@@ -142,7 +354,7 @@
         "lib/OptimizedImage.js"
       ],
       "depends_on": [
-        "1"
+        "2"
       ],
       "acceptance": [
         "CI: shell snapshot against owner screenshot: big current-look hero, real item thumbnails/brands/removable × in floating Current Outfit, bookmark and share buttons, slide-up/down AI Stylist sheet; no text-only tags in place of thumbnails.",
@@ -150,7 +362,8 @@
         "CI: Current Outfit removal changes only current selection, not canonical closet/garments/timeline; bookmark uses existing saved fits and share is explicit/safe.",
         "CI: old Explore, StyleVault, Try On, Pods and Shop-chat routes remain functional; no App.js or other PR #4-owned file change while PR #4 is open.",
         "CI: exactly four chips in this order: Today's look, Style my closet, Find & buy, Elevate; no fifth chip, no More Looks, Mix & Match, Color Analysis or Style Advice chips.",
-        "CI: Today shows authorized saved look or closet prompt; Elevate chip disabled without hero look, its garment row never appears on an empty look."
+        "CI: Today shows authorized saved look or closet prompt; Elevate chip disabled without hero look, its garment row never appears on an empty look.",
+        "CI: consume first-task shared brand tokens/nav/unique animation components; no generic press-bounce; respect PR4 protected App.js until merged."
       ],
       "status": "proposed",
       "external_dependencies": [
@@ -161,10 +374,21 @@
           "fallback": "if not merged, must avoid App.js and every file touched by PR #4; no merge into main until conflicts are safely resolved"
         }
       ],
-      "one_screen_approval": "Final interaction model Approved by owner 2026-11-10 12:13 PM PT"
+      "one_screen_approval": "Final interaction model Approved by owner 2026-11-10 12:13 PM PT",
+      "allowed_files": [
+        "screens/StylistScreen.js",
+        "components/BottomBar.js",
+        "App.js",
+        "tests/stylist/shell.test.cjs",
+        "components/StylistHistory.js",
+        "components/StylistHero.js",
+        "components/CurrentOutfitPanel.js",
+        "components/StylistSheet.js",
+        "components/StylistOverflowMenu.js"
+      ]
     },
     {
-      "id": "3",
+      "id": "4",
       "title": "Apply verified design system",
       "goal": "Match owner's final 12:13 interaction model using screenshot and Thanmayi Figma: exactly four chips, current-look hero, real thumbnails, AI Stylist sheet, History menu, inline cards, and context menu Style this/Fit for you/Buy.",
       "edits": [
@@ -194,18 +418,25 @@
         "components/StylistOverflowMenu.js"
       ],
       "depends_on": [
-        "2"
+        "3"
       ],
       "acceptance": [
         "CI: node tests/stylist/design.test.cjs verifies tokens, accessibility, responsive hero/current-outfit/sheet/overflow layout and card expansion states; visual snapshots compare with owner reference when accessible.",
         "CI: real image thumbnails, compact slide-up/down sheet, two-option overflow, no Spaces and no default history full timeline; existing profile and StyleVault actions preserved.",
-        "CI: design snapshot verifies four final chips, three-item context menu, three-looks More action, no retired chips or separate workflows."
+        "CI: design snapshot verifies four final chips, three-item context menu, three-looks More action, no retired chips or separate workflows.",
+        "CI: apply brand kit to Stylist and any PR4-protected style surfaces ONLY after PR4 merges, via a separate change scoped to this task; do not backdoor Task1 allowlist."
       ],
       "status": "proposed",
-      "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT; reference image must be obtained before visual sign-off"
+      "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT; reference image must be obtained before visual sign-off",
+      "allowed_files": [
+        "lib/stylistTheme.js",
+        "components/StylistLayout.js",
+        "screens/StylistScreen.js",
+        "tests/stylist/design.test.cjs"
+      ]
     },
     {
-      "id": "4",
+      "id": "5",
       "title": "One continuous chat, contextual Style this and chat-driven advice",
       "goal": "Reuse existing chat_conversations and chat_messages only. Exactly one Stylist conversation per user across days; History by day/kind; typed card/event payloads, owner-only RLS. Inline Shop and exactly 3-item Style this/Fit for you/Buy context menu, typed pairing requests -> 2–3 closet-first pairings in one card, and color/style advice in chat. No separate chip workflows or new tables.",
       "edits": [
@@ -273,7 +504,7 @@
         "lib/upload.ts"
       ],
       "depends_on": [
-        "3"
+        "4"
       ],
       "acceptance": [
         "CI: node tests/stylist/timeline.test.cjs guarantees exactly one kind=stylist conversation per user via unique user+kind=stylist constraint and race-safe get-or-create, all days append to it; legacy kind=shop messages isolated and type=user|ai stays compatible.",
@@ -287,10 +518,25 @@
         "CI: all UI copy omits 'workflow' and workflow numbering; only internal docs may number features."
       ],
       "status": "proposed",
-      "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT"
+      "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT",
+      "allowed_files": [
+        "screens/StylistScreen.js",
+        "lib/stylistIntent.js",
+        "tests/stylist/chatCatalog.test.cjs",
+        "lib/stylistTimeline.js",
+        "tests/stylist/timeline.test.cjs",
+        "components/StylistShopCard.js",
+        "components/StylistHistory.js",
+        "components/StylistOverflowMenu.js",
+        "scripts/migrations/alter_existing_stylist_chat.sql",
+        "components/StylistPairingCard.js",
+        "components/StylistItemMenu.js",
+        "tests/stylist/styleThis.test.cjs",
+        "tests/stylist/chatAdvice.test.cjs"
+      ]
     },
     {
-      "id": "5",
+      "id": "6",
       "title": "Elevate visible look via PR #4 try-on",
       "goal": "Only show Elevate after a Stylist main look exists. Use active image-backed garments catalog (no SerpAPI), rank with style/color/current look, and keep row size-free until Try On. Copy remote garment into owner uploads, map category, call only PR #4 synchronous gated receipt API, verify once, save history server-only, keep image on history-save warning and handle failures. Add per-user daily cap before live use.",
       "edits": [
@@ -338,7 +584,7 @@
         "components/StylistItemMenu.js"
       ],
       "depends_on": [
-        "4"
+        "5"
       ],
       "acceptance": [
         "CI: node tests/stylist/tryOnAdapter.test.cjs verifies Elevate row hidden when no main look; visible for closet, prior try-on and tomorrow's look, row count configurable by design; uses main look as human_img and has no body-photo prompt.",
@@ -374,10 +620,15 @@
       "workflow_approval": "Approved by owner 2026-11-10, 10:51 AM PT",
       "estimated_cost_per_use": "~$0.03–$0.04/try-on, unverified; plus storage and traffic",
       "daily_cap": "Server-enforced per-user daily generation cap before go-live; initially disabled pending owner-approved value; test cap before enabling",
-      "optional_user_events": "No new user_events write; keep existing approved style tracking only"
+      "optional_user_events": "No new user_events write; keep existing approved style tracking only",
+      "allowed_files": [
+        "screens/StylistScreen.js",
+        "lib/stylistTryOn.js",
+        "tests/stylist/tryOnAdapter.test.cjs"
+      ]
     },
     {
-      "id": "6",
+      "id": "7",
       "title": "Inline Pod-ready, Go live and live-vote cards",
       "goal": "Offer once per real look; approved short line and truthful style overlap only. Auto-fill ready card (hero photo, title, Global, 15 min) with inline edit; only Go live creates one Pod. Append ID-only cards to Stylist history, show live timer/votes/shares/invites/recap in the AI Stylist sheet with full-screen in-screen expansion on tap, durable No; no PR #4 dependency.",
       "edits": [
@@ -425,7 +676,7 @@
         "scripts/migrations/alter_existing_stylist_chat.sql"
       ],
       "depends_on": [
-        "4"
+        "5"
       ],
       "acceptance": [
         "CI: node tests/stylist/podConsent.test.cjs no Pod prompt/button without current look; once per look from closet, try-on or tomorrow, or Send to Pod/user request; No writes durable pod_declined so no repeat after reload.",
@@ -444,10 +695,16 @@
       "one_screen_approval": "Approved by owner 2026-11-10, 11:05 AM PT",
       "external_dependencies": [],
       "pr4_dependency": "None. Pod wiring uses existing or mocked look ID and remains independent of MVPStyli PR #4.",
-      "estimated_cost_per_use": "~$0 incremental provider cost, existing Supabase read/write charges only; unverified"
+      "estimated_cost_per_use": "~$0 incremental provider cost, existing Supabase read/write charges only; unverified",
+      "allowed_files": [
+        "lib/stylistPods.js",
+        "screens/StylistScreen.js",
+        "components/StylistPodCard.js",
+        "tests/stylist/podConsent.test.cjs"
+      ]
     },
     {
-      "id": "7",
+      "id": "8",
       "title": "Style my closet: three looks plus More card action",
       "goal": "From Style my closet chip enforce 3–4 owned clothing-photo uploads and full-body profile image, start WF2 server picker immediately. Photos remain in per-user protected existing Storage, indexed by typed closet card payload in the one chat (no closet_items table). Three PR4 images and optional question; More button on three-looks card requests another set through same picker/compositor/TEST gate, not a More Looks chip.",
       "edits": [
@@ -493,8 +750,8 @@
         "scripts/migrations/alter_existing_stylist_chat.sql"
       ],
       "depends_on": [
-        "5",
-        "6"
+        "6",
+        "7"
       ],
       "acceptance": [
         "CI: node tests/stylist/threeLooks.test.cjs verifies 3–4 photos, required full-body profile image, immediate start (no More Looks action), optional question saved to profile, parallel 3 PR4 requests, and separate server composition of one garment image per look.",
@@ -514,10 +771,18 @@
         }
       ],
       "feature_gate": "STYLIT_TRYON_TEST_ENABLED; no production/live generation before owner go-live approval",
-      "workflow_approval": "Approved by owner 2026-11-10, 10:22 AM PT"
+      "workflow_approval": "Approved by owner 2026-11-10, 10:22 AM PT",
+      "allowed_files": [
+        "screens/StylistScreen.js",
+        "components/StylistLooks.js",
+        "lib/stylistCloset.js",
+        "api/stylist-looks/index.ts",
+        "api/_lib/stylistOutfitComposite.ts",
+        "tests/stylist/threeLooks.test.cjs"
+      ]
     },
     {
-      "id": "8",
+      "id": "9",
       "title": "Today's look chip and gated tomorrow scheduling without new tables",
       "goal": "Today's look chip loads current saved/tomorrow look or prompts for closet. Mock hourly Supabase pg_cron job with opt-in and active-last-7-day filter, one Vercel worker per eligible user, existing WF2 one-look picker/PR4, TEST Open-Meteo and calendar sync. Append once-per-local-date tomorrow card/status in existing chat_messages, save generated result in PR4 try_on_history, use existing notifications and per-device tokens on profiles; no tomorrow_looks/device token table and no live sends.",
       "edits": [
@@ -563,14 +828,14 @@
         "lib/upload.ts"
       ],
       "depends_on": [
-        "7"
+        "8"
       ],
       "acceptance": [
         "CI: node tests/stylist/tomorrow.test.cjs checks pg_cron hourly eligibility at 21:00 local with IANA timezone/DST, last-active <=7 days, opt-in and one independently idempotent worker per user (never a >30 s batch).",
         "CI: mocked on-device expo-calendar sync tests consent, event title/time freshness, profiles.timezone/city sign-in update, user-provided tomorrow event fallback, and Open-Meteo TEST-only city forecast.",
         "CI: mock WF2 planner/compositor and PR4 try-on; enforce only one composed look, exactly one retry then skip, server-only try_on_history, one per-user/local-date chat card uniqueness via existing chat_messages expression index, owner-scoped profiles push-token JSON and RLS.",
         "CI: text-only push uses exact 'Tomorrow's look is ready.'; denied push leaves in-app notification; missing closet/body photo prompts; Stylist open renders photo, reason, Wear it/Show me more/Send to Pod with Global suggested.",
-        "CI: no live sends or cron jobs while dark; PR #4 merged + its server-only history SQL applied + task 7 protected closet Storage refs/composition proven are required deployment gates.",
+        "CI: no live sends or cron jobs while dark; PR #4 merged + its server-only history SQL applied + task 8 protected closet Storage refs/composition proven are required deployment gates.",
         "CI: tapping a past Tomorrow card or its in-app notification restores the authorized look in the Stylist hero; history uses the same per-user conversation with day dividers and no extra chat table.",
         "CI: Today's look is exactly one of four chips; retrieves authorized existing look and never triggers unapproved live generation; no new tomorrow_looks or token table.",
         "CI: nightly statuses and dedupe live in existing chat_messages; tokens in profiles JSON; notifications in existing notifications, none in new tables; scheduled worker stays dark until go-live."
@@ -584,15 +849,23 @@
         }
       ],
       "prerequisites": [
-        "Workflow 2 task 7 merged and proven: per-user private closet Storage chat refs/RLS plus multi-piece compositor",
+        "Workflow 2 task 8 merged and proven: per-user private closet Storage chat refs/RLS plus multi-piece compositor",
         "MVPStyli PR #4 merged and server-only try_on_history migration applied",
         "Owner go-live approval required before scheduling, live weather commercial use, model requests, or push sends"
       ],
       "feature_gate": "dark/mocked until owner go-live; STYLIT_TRYON_TEST_ENABLED for TEST image calls",
-      "workflow_approval": "Approved by owner 2026-11-10, 10:36 AM PT"
+      "workflow_approval": "Approved by owner 2026-11-10, 10:36 AM PT",
+      "allowed_files": [
+        "scripts/migrations/alter_existing_tomorrow_fields_and_cron.sql",
+        "api/stylist-tomorrow/index.ts",
+        "lib/stylistTomorrow.ts",
+        "lib/stylistCalendarSync.ts",
+        "screens/StylistScreen.js",
+        "tests/stylist/tomorrow.test.cjs"
+      ]
     },
     {
-      "id": "9",
+      "id": "10",
       "title": "Find & buy, contextual Fit for you and Buy event in chat",
       "goal": "Find & buy chip and shopping chat requests display inline Shop cards; tapping an item offers Style this/Fit for you/Buy; Fit for you is interest-gated and uses size/colorScoring/face-body. Buy opens a verified store link and records a single owner-scoped buy_intent chat_messages event (no new buy_intents table), no checkout.",
       "edits": [
@@ -660,7 +933,7 @@
         "components/StylistPairingCard.js"
       ],
       "depends_on": [
-        "8"
+        "9"
       ],
       "acceptance": [
         "CI: node tests/stylist/findBuy.test.cjs verifies photo/brand/price on all cards and ZERO size/fit notes or Fit Check calls before user taps Try On, says/taps I like this, or says/taps Buy; only the interested item gets size and one fit note.",
@@ -680,7 +953,7 @@
         {
           "repo": "killbill2792/MVPStyli",
           "pull_request": 4,
-          "require": "merged before task 9 Try On integration; do not edit PR #4 files"
+          "require": "merged before task 10 Try On integration; do not edit PR #4 files"
         }
       ],
       "feature_gates": {
@@ -689,8 +962,16 @@
         "affiliates": "None in v1; later owner approval"
       },
       "workflow_approval": "Approved by owner 2026-11-10, 10:40 AM PT",
-      "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT (presentation and fit-on-interest rule); WF4 stays approved at 10:40 AM PT"
+      "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT (presentation and fit-on-interest rule); WF4 stays approved at 10:40 AM PT",
+      "allowed_files": [
+        "lib/stylistShopping.js",
+        "screens/StylistScreen.js",
+        "tests/stylist/findBuy.test.cjs",
+        "components/StylistFitForYouCard.js",
+        "components/StylistShopCard.js"
+      ]
     }
   ],
-  "vision_version": "v2"
+  "vision_version": "v2",
+  "brand_approval": "Owner-approved visual kit 2026-11-10 12:23 PM PT; motion override 12:24 PM PT; task order 12:29 PM PT"
 }
