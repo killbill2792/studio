@@ -15,7 +15,7 @@ test('mismatch fails with both repository names', () => {
   });
 });
 test('missing or incomplete marker only warns', () => {
-  for (const body of ['', 'ordinary Dependabot PR', '<!-- repo: owner/repo -->']) {
+  for (const body of ['', 'ordinary Dependabot PR', '<!-- repo: owner/repo -->', '<!-- repo: <owner>/<repository> task: <task-id> -->']) {
     assert.equal(validateRepo(body, 'owner/repo').status, 'warning');
   }
 });
