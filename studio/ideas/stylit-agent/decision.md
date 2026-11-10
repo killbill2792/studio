@@ -6,7 +6,7 @@
 ## Handoff
 - Goal: Follow current exec.md. Do not restate vision here.
 - Status: proposed; no app code changed.
-- Owner decision: Vision and workflow brief accepted for proposal; **merge of this studio PR is the separate feature-start approval**. Do not merge automatically.
+- Owner decision: Workflow 1 (Stylist screen) **Approved by owner 2026-11-10, 10:18 AM PT**; Workflow 2 (Style my closet + three looks) **Approved by owner 2026-11-10, 10:22 AM PT**. Other workflows pending owner review. Vision remains v1. **Merge of this studio PR is the separate feature-start approval**; do not merge automatically.
 - Why: Owner's direction is recorded only in current exec.md.
 - Merge order: tasks 0a, 0b, 1–9; follow AGENTS.md and prove each parent before merging a child.
 - Code repo: killbill2792/MVPStyli only. This studio PR holds plans only.
@@ -22,6 +22,14 @@ flowchart TD
   looks --> tomorrow[Nightly look]
   tomorrow --> buy[Sized store link]
 ```
+
+## Workflow 2 locked requirements
+- Entry: Stylist **Style my closet**; exactly 3–4 clothing photos; require `profiles.body_image_url` full-body image first; generate immediately, without repurposing More Looks.
+- Server-side **OpenAI GPT-4.1 mini on Vercel** plans Closet (uploaded pieces only), Elevated (uploaded base plus 1–2 catalog pieces), and Makeover (new style). An optional question is asked during generation; save answers to the style profile and use timely answers for this run, late answers for the next; skip never blocks generation.
+- A separate server compositor makes one garment image per outfit, then starts three **parallel** PR #4-gated Nano Banana image jobs. Do not edit PR #4. Rough estimate **20–30 s for images**, plus uploads/planning/composition; **1 LLM call and 3 image generations per run**, costs unverified and not yet authorized.
+- New private `closet_items` table with user_id, per-user private storage image_path, type, color, created_at; RLS/storage isolation. Never mix with `garments`. PR #4 server-only `try_on_history` records each successful image.
+- Three swipe cards under main image; tap to promote; each Send to Pod suggests Global. Partial failure shows the other looks and Retry on the failed card.
+- Task 7 requires PR #4 merged and `STYLIT_TRYON_TEST_ENABLED` until go-live approval. Tasks 2/5 cannot edit `App.js` before PR #4 merge; otherwise avoid it and all PR #4 files.
 
 ## Do not break
 - No vision drift: v1 is only in current exec.md. On owner-approved changes, archive the old text under archive/ marked SUPERSEDED and never read archive/ in coding chats. Every coding PR must state its vision version; CI rejects mismatch with the current exec.md version. MVPStyli AGENTS.md must contain rules and a link only, no copied vision.

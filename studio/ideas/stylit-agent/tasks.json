@@ -1,7 +1,7 @@
 {
   "product": "stylit",
   "idea": "stylit-agent",
-  "plan_version": 2,
+  "plan_version": 3,
   "merge_order": [
     "0a",
     "0b",
@@ -71,7 +71,8 @@
       "title": "Map Shop, garments and routes",
       "goal": "Record every Shop reader, catalog endpoint and cross-route dependency before removing UI.",
       "edits": [
-        "docs/stylist/shop-map.md"
+        "docs/stylist/shop-map.md",
+        "tests/stylist/shopMap.test.cjs"
       ],
       "uses": [
         "App.js",
@@ -88,7 +89,8 @@
         "lib/garmentUtils.js",
         "api/garments/index.ts",
         "screens/ProductScreen.js",
-        "screens/StyleVaultScreen.js"
+        "screens/StyleVaultScreen.js",
+        "tests/stylist/shopMap.test.cjs"
       ],
       "depends_on": [
         "0b"
@@ -101,7 +103,7 @@
     {
       "id": "2",
       "title": "Stylist screen shell",
-      "goal": "Replace Shop tab with a visual shell, current outfit, cards, chips and pinned growing chat bar; all local/mock.",
+      "goal": "Replace Shop tab with a visual shell, current outfit, cards, chips and pinned growing chat bar; all local/mock. Gate: PR #4 must merge before editing App.js; otherwise avoid App.js and all PR #4 files.",
       "edits": [
         "screens/StylistScreen.js",
         "components/BottomBar.js",
@@ -126,9 +128,18 @@
         "1"
       ],
       "acceptance": [
-        "CI: node tests/stylist/shell.test.cjs checks Agent tab route and chat bar states without a network call."
+        "CI: node tests/stylist/shell.test.cjs checks Agent tab route and chat bar states without a network call.",
+        "CI: PR #4 status guard confirms merged before any App.js diff; if PR #4 is open, fail when this PR changes App.js or any PR #4-owned file."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "external_dependencies": [
+        {
+          "repo": "killbill2792/MVPStyli",
+          "pull_request": 4,
+          "require": "merged before any App.js change",
+          "fallback": "if not merged, must avoid App.js and every file touched by PR #4; no merge into main until conflicts are safely resolved"
+        }
+      ]
     },
     {
       "id": "3",
@@ -203,7 +214,7 @@
     {
       "id": "5",
       "title": "Elevate via PR #4 try-on",
-      "goal": "Wire Try On cards to PR #4 gated API and image replacement; no new model client.",
+      "goal": "Wire Try On cards to PR #4 gated API and image replacement; no new model client. Gate: PR #4 must merge before editing App.js; otherwise avoid App.js and all PR #4 files.",
       "edits": [
         "screens/StylistScreen.js",
         "lib/stylistTryOn.js",
@@ -230,9 +241,18 @@
         "4"
       ],
       "acceptance": [
-        "CI: node tests/stylist/tryOnAdapter.test.cjs mocks PR4, asserts no client history writes and image remains on failure."
+        "CI: node tests/stylist/tryOnAdapter.test.cjs mocks PR4, asserts no client history writes and image remains on failure.",
+        "CI: PR #4 status guard confirms merged before any App.js diff; if PR #4 is open, fail when this PR changes App.js or any PR #4-owned file."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "external_dependencies": [
+        {
+          "repo": "killbill2792/MVPStyli",
+          "pull_request": 4,
+          "require": "merged before any App.js change",
+          "fallback": "if not merged, must avoid App.js and every file touched by PR #4; no merge into main until conflicts are safely resolved"
+        }
+      ]
     },
     {
       "id": "6",
@@ -271,38 +291,66 @@
     {
       "id": "7",
       "title": "Closet and three looks",
-      "goal": "Upload 3–4 photos, generate three labeled images through PR4, ask question while waiting and link to Pod.",
+      "goal": "Stylist Style my closet: require 3–4 clothing photos and an existing full-body profile photo; generate immediately (not More Looks). Server GPT-4.1 mini plans Closet-only, Elevated (+1–2 catalog pieces) and new-style Makeover; server composes each outfit and sends three parallel PR #4 try-ons. Ask optional question, show 3 swipe cards and individual Retry/Send to Pod.",
       "edits": [
-        "lib/stylistCloset.js",
-        "components/StylistLooks.js",
         "screens/StylistScreen.js",
+        "components/StylistLooks.js",
+        "lib/stylistCloset.js",
+        "api/stylist-looks/index.ts",
+        "api/_lib/stylistOutfitComposite.ts",
+        "scripts/migrations/create_private_closet_items.sql",
         "tests/stylist/threeLooks.test.cjs"
       ],
       "uses": [
         "lib/upload.ts",
-        "lib/garmentUtils.js",
-        "lib/tryonClient.ts",
         "lib/styleEngine.ts",
-        "screens/PodsScreen.js"
+        "lib/colorAnalysis.ts",
+        "lib/garmentUtils.js",
+        "api/garments/index.ts",
+        "lib/tryonClient.ts",
+        "api/tryon/index.ts",
+        "screens/PodsScreen.js",
+        "lib/fitLogic.js",
+        "lib/supabase.ts"
       ],
       "files": [
-        "lib/stylistCloset.js",
-        "components/StylistLooks.js",
         "screens/StylistScreen.js",
+        "components/StylistLooks.js",
+        "lib/stylistCloset.js",
+        "api/stylist-looks/index.ts",
+        "api/_lib/stylistOutfitComposite.ts",
+        "scripts/migrations/create_private_closet_items.sql",
         "tests/stylist/threeLooks.test.cjs",
         "lib/upload.ts",
-        "lib/garmentUtils.js",
-        "lib/tryonClient.ts",
         "lib/styleEngine.ts",
-        "screens/PodsScreen.js"
+        "lib/colorAnalysis.ts",
+        "lib/garmentUtils.js",
+        "api/garments/index.ts",
+        "lib/tryonClient.ts",
+        "api/tryon/index.ts",
+        "screens/PodsScreen.js",
+        "lib/fitLogic.js",
+        "lib/supabase.ts"
       ],
       "depends_on": [
         "6"
       ],
       "acceptance": [
-        "CI: node tests/stylist/threeLooks.test.cjs uses mocked image path, tests partial completion, question and Pod links."
+        "CI: node tests/stylist/threeLooks.test.cjs verifies 3–4 photos, required full-body profile image, immediate start (no More Looks action), optional question saved to profile, parallel 3 PR4 requests, and separate server composition of one garment image per look.",
+        "CI: mock LLM planner verifies Closet uses only uploads, Elevated uses at most two catalog pieces, Makeover avoids previously recorded styles; tests verify partial success, failed-card Retry, swipe-card promotion and Send to Pod.",
+        "CI: RLS/storage policy tests reject cross-user closet_items reads/writes; no client try_on_history writes; test-only gate prevents live image calls.",
+        "CI: PR #4 must report merged before this task branches/merges; assert STYLIT_TRYON_TEST_ENABLED gate is enforced."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "external_dependencies": [
+        {
+          "repo": "killbill2792/MVPStyli",
+          "pull_request": 4,
+          "require": "merged and based on top of PR #4 before implementation; do not edit its files"
+        }
+      ],
+      "feature_gate": "STYLIT_TRYON_TEST_ENABLED; no production/live generation before owner go-live approval",
+      "workflow_approval": "Approved by owner 2026-11-10, 10:22 AM PT"
     },
     {
       "id": "8",
