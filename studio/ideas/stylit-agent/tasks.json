@@ -1,7 +1,7 @@
 {
   "product": "stylit",
   "idea": "stylit-agent",
-  "plan_version": 6,
+  "plan_version": 7,
   "merge_order": [
     "0a",
     "0b",
@@ -9,8 +9,8 @@
     "2",
     "3",
     "4",
-    "5",
     "6",
+    "5",
     "7",
     "8",
     "9"
@@ -102,13 +102,15 @@
     },
     {
       "id": "2",
-      "title": "Stylist screen shell",
-      "goal": "Replace Shop tab with a visual shell, current outfit, cards, chips and pinned growing chat bar; all local/mock. Gate: PR #4 must merge before editing App.js; otherwise avoid App.js and all PR #4 files.",
+      "title": "One-screen Stylist hero and inline thread",
+      "goal": "Implement owner-approved one-screen Stylist shell: pinned main-look hero and item tags, a single newest-at-bottom scrollable history with inline placeholders for 7 card types, pinned chips and typing-only expanding chat bar. Never navigate from new Stylist flows to separate Pod/result pages; keep old app routes working. Avoid App.js until PR #4 merged.",
       "edits": [
         "screens/StylistScreen.js",
         "components/BottomBar.js",
         "App.js",
-        "tests/stylist/shell.test.cjs"
+        "tests/stylist/shell.test.cjs",
+        "components/StylistHistory.js",
+        "components/StylistHero.js"
       ],
       "uses": [
         "lib/AppContext.js",
@@ -120,6 +122,8 @@
         "components/BottomBar.js",
         "App.js",
         "tests/stylist/shell.test.cjs",
+        "components/StylistHistory.js",
+        "components/StylistHero.js",
         "lib/AppContext.js",
         "screens/ChatScreen.js",
         "docs/stylist/shop-map.md"
@@ -128,8 +132,9 @@
         "1"
       ],
       "acceptance": [
-        "CI: node tests/stylist/shell.test.cjs checks Agent tab route and chat bar states without a network call.",
-        "CI: PR #4 status guard confirms merged before any App.js diff; if PR #4 is open, fail when this PR changes App.js or any PR #4-owned file."
+        "CI: node tests/stylist/shell.test.cjs checks hero photo/item tags at top and one chronological thread newest at bottom, with accessible inline Look/Pod ready/Live Pod/Shop/Tomorrow/Closet/Try-on card placeholders and no new routes or Spaces.",
+        "CI: bottom chips are Elevate, Mix & Match, Color, Style advice; slim chat bar expands only while actively typing and collapses otherwise.",
+        "CI: old Explore, StyleVault, Try On, Pods and Shop-chat routes remain reachable; when PR #4 is unmerged no App.js or other PR #4 file is edited."
       ],
       "status": "proposed",
       "external_dependencies": [
@@ -139,7 +144,8 @@
           "require": "merged before any App.js change",
           "fallback": "if not merged, must avoid App.js and every file touched by PR #4; no merge into main until conflicts are safely resolved"
         }
-      ]
+      ],
+      "one_screen_approval": "Approved by owner 2026-11-10, 11:05 AM PT"
     },
     {
       "id": "3",
@@ -175,13 +181,16 @@
     },
     {
       "id": "4",
-      "title": "Chat intents and catalog sheet",
-      "goal": "Reuse style signals and SerpAPI/garment search; show ~10 cards in same-screen sheet.",
+      "title": "Chat intents, private Stylist timeline and catalog sheet",
+      "goal": "Preserve existing product search and style signals, show ten-result sheet, and reuse chat_conversations/chat_messages with kind=stylist, an append-only ID-only card timeline and strict owner RLS. Existing chats are kind=shop and never mixed. Keep original user/ai message type for ChatScreen compatibility.",
       "edits": [
         "screens/StylistScreen.js",
         "components/StylistCatalogSheet.js",
         "lib/stylistIntent.js",
-        "tests/stylist/chatCatalog.test.cjs"
+        "tests/stylist/chatCatalog.test.cjs",
+        "lib/stylistTimeline.js",
+        "scripts/migrations/create_private_stylist_timeline.sql",
+        "tests/stylist/timeline.test.cjs"
       ],
       "uses": [
         "screens/ChatScreen.js",
@@ -189,25 +198,36 @@
         "lib/productSearch.ts",
         "api/searchwebproducts/index.ts",
         "lib/garmentUtils.js",
-        "api/garments/index.ts"
+        "api/garments/index.ts",
+        "scripts/ADD_CHAT_HISTORY.sql",
+        "lib/supabase.ts"
       ],
       "files": [
         "screens/StylistScreen.js",
         "components/StylistCatalogSheet.js",
         "lib/stylistIntent.js",
         "tests/stylist/chatCatalog.test.cjs",
+        "lib/stylistTimeline.js",
+        "scripts/migrations/create_private_stylist_timeline.sql",
+        "tests/stylist/timeline.test.cjs",
         "screens/ChatScreen.js",
         "lib/styleEngine.ts",
         "lib/productSearch.ts",
         "api/searchwebproducts/index.ts",
         "lib/garmentUtils.js",
-        "api/garments/index.ts"
+        "api/garments/index.ts",
+        "scripts/ADD_CHAT_HISTORY.sql",
+        "lib/supabase.ts"
       ],
       "depends_on": [
         "3"
       ],
       "acceptance": [
-        "CI: node tests/stylist/chatCatalog.test.cjs mocks catalog and search failure, verifies 10-card cap and closed/open sheet."
+        "CI: node tests/stylist/chatCatalog.test.cjs mocks catalog and web search failures and verifies same-screen ten-card catalog sheet.",
+        "CI: node tests/stylist/timeline.test.cjs verifies chronological append-only short text and all card_type values, payloads only containing reference IDs and no duplicated pods/history/user events/style-profile snapshots.",
+        "CI: migration tests preserve type=user|ai and legacy ChatScreen, backfill old conversations to kind=shop and filter new kind=stylist, ensuring no cross-kind history.",
+        "CI: RLS/security tests prove original public USING(true) chat policies are removed by additive migration, chat rows owner-only, cross-user reads/inserts/updates denied and no exposed Stylist timeline.",
+        "CI: durable No event pod_declined prevents new offers for same look across reload, Cancel creates no new database write."
       ],
       "status": "proposed"
     },
@@ -297,37 +317,67 @@
     },
     {
       "id": "6",
-      "title": "Suggest and start Pod",
-      "goal": "Use style intelligence to suggest a global/friends/twins Pod; create only after confirmation.",
+      "title": "Inline Pod-ready, Go live and live-vote cards",
+      "goal": "Offer once per real look; approved short line and truthful style overlap only. Auto-fill ready card (hero photo, title, Global, 15 min) with inline edit; only Go live creates one Pod. Append ID-only cards to Stylist history, show live timer/votes/shares/invites/recap inline, durable No; no PR #4 dependency.",
       "edits": [
         "lib/stylistPods.js",
         "screens/StylistScreen.js",
+        "components/StylistPodCard.js",
         "tests/stylist/podConsent.test.cjs"
       ],
       "uses": [
+        "lib/stylistTimeline.js",
+        "scripts/migrations/create_private_stylist_timeline.sql",
         "lib/pods.ts",
+        "lib/styleEngine.ts",
+        "scripts/CREATE_GET_USERS_GOOD_AT_STYLE.sql",
+        "lib/friends.ts",
+        "lib/share.ts",
         "screens/PodsScreen.js",
         "screens/PodLive.js",
         "screens/PodRecap.js",
-        "lib/styleEngine.ts"
+        "api/pod-public/index.ts",
+        "api/pod-guest-vote/index.ts",
+        "scripts/ADD_CHAT_HISTORY.sql"
       ],
       "files": [
         "lib/stylistPods.js",
         "screens/StylistScreen.js",
+        "components/StylistPodCard.js",
         "tests/stylist/podConsent.test.cjs",
+        "lib/stylistTimeline.js",
+        "scripts/migrations/create_private_stylist_timeline.sql",
         "lib/pods.ts",
+        "lib/styleEngine.ts",
+        "scripts/CREATE_GET_USERS_GOOD_AT_STYLE.sql",
+        "lib/friends.ts",
+        "lib/share.ts",
         "screens/PodsScreen.js",
         "screens/PodLive.js",
         "screens/PodRecap.js",
-        "lib/styleEngine.ts"
+        "api/pod-public/index.ts",
+        "api/pod-guest-vote/index.ts",
+        "scripts/ADD_CHAT_HISTORY.sql"
       ],
       "depends_on": [
-        "5"
+        "4"
       ],
       "acceptance": [
-        "CI: node tests/stylist/podConsent.test.cjs asserts no Pod insert before Yes and checks cancel/retry."
+        "CI: node tests/stylist/podConsent.test.cjs no Pod prompt/button without current look; once per look from closet, try-on or tomorrow, or Send to Pod/user request; No writes durable pod_declined so no repeat after reload.",
+        "CI: approved exact line 'I like this. Want a quick vote? I\\'d go Global.'; 'this matches your style' only for real tags/colors/category overlap with user_style_profile per get_users_good_at_style; no invented look score or confidence text.",
+        "CI: Pod-ready card is inline and visually same shape as Live Pod: current image, auto title, global_mix audience shown as Global and 15 minutes; Edit title/audience/timer in card; Cancel writes nothing and no createpod navigation.",
+        "CI: no pods insert until Go live; signed-in guard, double tap/retry idempotence inserts exactly one pods row; successful create appends pod_live reference ID, failed create leaves ready state with Retry and no fake Pod/votes.",
+        "CI: all inline cards append one chat_messages record with ID-only payload and correct kind=stylist; no duplicate pod/vote/try_on_history/user_events/style profile record and old shop chats not mixed.",
+        "CI: use getPodVotes + getVoteCounts + subscribeToPodVotes for real yes/maybe/no with unsubscribe; timer uses pods.ends_at and shared data; recap uses existing calculateConfidence, not invented look score.",
+        "CI: existing lib/share.ts, api/pod-public, api/pod-guest-vote, createPodInvites and createNotification reused; empty Friends still create; share/invite failure leaves real pod live with Retry Share.",
+        "CI: Fit not visible before Like/Try On/Buy; Pod wiring has no reference, merge-order or external dependency on PR #4."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "workflow_approval": "Approved by owner 2026-11-10, 11:05 AM PT",
+      "one_screen_approval": "Approved by owner 2026-11-10, 11:05 AM PT",
+      "external_dependencies": [],
+      "pr4_dependency": "None. Pod wiring uses existing or mocked look ID and remains independent of MVPStyli PR #4.",
+      "estimated_cost_per_use": "~$0 incremental provider cost, existing Supabase read/write charges only; unverified"
     },
     {
       "id": "7",
@@ -374,6 +424,7 @@
         "lib/supabase.ts"
       ],
       "depends_on": [
+        "5",
         "6"
       ],
       "acceptance": [

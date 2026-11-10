@@ -6,7 +6,7 @@ Status: proposed; all code later in killbill2792/MVPStyli
 Read [exec.md — v1](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md) for the only current vision. This file is implementation design, not a second vision.
 
 ## Architecture
-The app uses `App.js` route state and `components/BottomBar.js`. `shop` shows an inline grid; `chat` shows `screens/ChatScreen.js`; `account` renders `screens/StyleVaultScreen.js`; `userprofile` renders `screens/UserProfileScreen.js`; `tryon`, `product`, `podshome`, `createpod`, `podlive`, `podguest` and `podrecap` remain. `screens/AccountScreen.js` is not the active account route. Preserve Explore and StyleCraft. Use a Stylist route in place of Shop, not a new app.
+The app uses `App.js` route state and `components/BottomBar.js`. `shop` shows an inline grid; `chat` shows legacy `screens/ChatScreen.js`; `account` renders `screens/StyleVaultScreen.js`; `userprofile` renders `screens/UserProfileScreen.js`. Keep old `tryon`, `product`, `podshome`, `createpod`, `podlive`, `podguest`, and `podrecap` routes functional for existing entry points, but **new Stylist flows render all cards inline on Stylist, never navigate to separate create/Pod-live/result pages**. Preserve Explore and StyleCraft. Spaces are out of scope. `screens/AccountScreen.js` is not the active account route.
 
 Current Shop: `App.js` calls `fetchGarmentsAsProducts` (`lib/garmentUtils.js`) for `GET /api/garments?active_only=true`; `api/garments/index.ts` reads `garments` and optional `garment_sizes`. The Shop grid opens `screens/ProductScreen.js`; Fit Check uses its size mapping and `lib/fitLogic.js`. `lib/productApi.js` contains older direct `products` writes; do not assume that table exists.
 
@@ -25,13 +25,36 @@ flowchart TD
   worker --> push[Text-only Expo push - gated]
 ```
 
+## One-screen layout and timeline — approved by owner 2026-11-10, 11:05 AM PT
+- The hero **current-look user photo and small item tags** stay at the top. Below is **one vertically scrollable history** of concise Stylist lines plus inline **Look, Pod ready, Live Pod, Shop, Tomorrow's look, Closet three looks, Try-on result** cards. Render chronological history oldest-to-newest with auto-scroll to bottom for new entries, without hiding the hero. Do not add a second activity page or Spaces.
+- **Live Pod** card includes remaining timer from `pods.ends_at` plus real live **yes/maybe/no** totals via existing `lib/pods.ts` `getPodVotes`, `getVoteCounts`, `subscribeToPodVotes`; unsubscribe on unmount/when pod changes. Links use `lib/share.ts` and existing guest routes; results/recap can render inline through the same existing data/services, without duplicating Pod logic.
+- Bottom controls stay pinned: **Elevate, Mix & Match, Color, Style advice** chips; a slim chat bar **expands only during typing**, not whenever a card appears or a result streams.
+- **History schema (existing, not a second chat service):** `scripts/ADD_CHAT_HISTORY.sql` creates `chat_conversations`/`chat_messages`. Keep existing `chat_messages.type` **`user|ai`** for backward compatibility with `screens/ChatScreen.js`; add `chat_messages.card_type` (text enum/check: `look|pod_ready|pod_live|shop|closet|tomorrow|tryon`, plus a minimal `pod_declined` event for durable No) and a typed `payload` JSONB of **IDs only** (`look_id`, `pod_id`, `try_on_history_id`, `tomorrow_look_id`, or reference IDs appropriate to the card). Store no copied photos, full Pod objects, votes, style scores, `user_events`, or `user_style_profile` snapshots in chat history. The canonical rows stay in their own tables; hydrate cards from authorized records.
+- Add a `chat_conversations.kind` of `shop|stylist`. Existing conversations backfill/default to **shop**; new Stylist conversations use **stylist**. Both Stylist and legacy Shop chat must filter by kind so histories **never mix**. Preserve old chat display and user/ai writes. Use an additive, rollback-safe migration in MVPStyli; do not edit `scripts/ADD_CHAT_HISTORY.sql` itself.
+- **Security issue to fix as part of this migration:** `scripts/ADD_CHAT_HISTORY.sql` includes temporary public policies `Public read/insert/update/delete conversations` and `Public read/insert messages` with `USING (true)`. Remove/replace these permissive policies in migration and ensure **owner-only RLS** on `chat_conversations` and `chat_messages` with authorization enforced by conversation ownership. Never expose a private timeline to other users.
+- Treat the Stylist thread as **append-only**: one new row per line/card/event, ordered by `created_at,id`; never edit/delete old timeline rows on state changes. For Pod-ready, append a row referencing the look; draft title/audience/timer can remain local until Go live. Go live appends a distinct `pod_live` row referencing the real `pods.id`. **Cancel** writes nothing new and creates no Pod; **No** appends a `pod_declined` look-ID event so a dismissed offer never reappears after reload. Preserve idempotence and one card/event per unique look-action pair; do not rewrite history.
+- Reuse `lib/styleEngine.ts` `getStyleProfile` and existing `get_users_good_at_style` logic for genuine tag/color/category overlaps only. Do not describe `calculateConfidence` vote percentages as an unimplemented look-level intelligence score.
+
+```mermaid
+flowchart TD
+  hero[Sticky hero: current photo and item tags] --> history[One append-only Stylist history]
+  history --> cards[Inline cards by referenced IDs]
+  cards --> pods[Existing Pods and votes]
+  cards --> shop[Existing catalog and web search]
+  cards --> looks[Owned look history and tomorrow looks]
+  input[Pinned chips and slim typing-only input] --> history
+  history --> db[chat_conversations kind=stylist]
+  db --> msg[chat_messages type user/ai plus card_type and ID payload]
+  pods --> live[subscribeToPodVotes and existing recap]
+```
+
 ## Workflows
 All wait ranges are rough estimates, not measured SLAs. Costs are per use: provider rates are not verified; no paid/live use is authorized by this plan.
 
 ### 1. Stylist chat turn — Workflow 1
 **Approved by owner 2026-11-10, 10:18 AM PT.**
-- Trigger/screen: User types or taps a quick chip in the pinned bar; Stylist stays on the same screen.
-- Calls and save: Read allowed profile/color/fit/style signals via lib/styleEngine.ts and existing profile state; route intents locally to advice, existing search or Pod, with a safe short reply. No new paid model by default. Only save conversation if using existing chat_conversations/chat_messages with the user's ownership checks.
+- Trigger/screen: User types in the slim bottom bar or taps a quick chip; Stylist stays on the single hero-and-history screen with short messages and inline cards. New rows append at the bottom; input expands only while typing.
+- Calls and save: Read allowed profile/color/fit/style signals via lib/styleEngine.ts and existing profile state; route intents locally to advice, existing search or Pod, with a safe short reply. No new paid model by default. Append every authorized Stylist line/card to the existing owner-scoped `chat_conversations(kind=stylist)` and `chat_messages` timeline using typed ID-only payloads. Keep legacy `kind=shop` history separate and do not duplicate canonical data.
 - Wait/visible state: Estimated 0.5–2 s for a local answer or 2–5 s if reading profile data; show a short thinking line and keep the image visible.
 - Failure: Missing profile or network -> generic advice with retry; do not invent scores.
 - Cost per use: Local rules: $0 marginal API; database requests billed under existing Supabase plan; optional model requires later approval.
@@ -102,20 +125,41 @@ flowchart TD
   sheet --> tryon[Try On via PR4]
 ```
 
-### 4. Proactive suggestion to Pod
-**Pending owner review.**
-- Trigger/screen: Stylist says exactly: “I like this, your style intelligence also rates it high. If you have doubts I can run a Pod; I'd suggest Global.” User says Yes before a Pod starts.
-- Calls and save: Get style fingerprint via lib/styleEngine.ts and image from existing try-on; on confirmation open existing createpod route in screens/PodsScreen.js, then lib/pods.ts createPod plus existing invites/votes/recap. Offer Global, friends or twins; no silent Pod creation.
-- Wait/visible state: Estimated 1–3 s to create a confirmed Pod; show progress before entering the existing timer/live route.
-- Failure: No image, account or create error -> keep suggestion and explain; allow manual retry.
-- Cost per use: No new model call; Supabase writes and storage under existing plan; votes add ordinary requests.
+### 4. Proactive Pod suggestion — Workflow 6
+**Approved by owner 2026-11-10, 11:05 AM PT.**
+
+- **Trigger/screen:** After a real look appears in the Stylist hero from **WF2 closet**, **WF5 try-on**, or **WF3 tomorrow's look**, make the suggestion **at most once for that look**; also accept **Send to Pod** and **“run a Pod”** for an on-screen look. If there is no look, **hide** the offer and Pod action. **No** is a permanent decline **for this look** across reloads; do not re-offer it.
+- **Stylist line:** **“I like this. Want a quick vote? I'd go Global.”** No look-level score exists in the app; never invent a score or imply a rating. Say **“this matches your style”** **only if** the look's actual tags/colors/category overlap the user's `user_style_profile` (`top_style_tags`, `top_colors`, `top_categories`) using the same matching evidence as `get_users_good_at_style` in `scripts/CREATE_GET_USERS_GOOD_AT_STYLE.sql` and `lib/pods.ts`. If no verified overlap or metadata is missing, omit that claim.
+- **Ready card, no typing or route change:** Inline **Pod ready** card in the same Stylist history, rendered to **match the final Live Pod card**: current hero look as the default image, auto-filled title (for example **“Date night look?”**), audience label **Global** (`pods.audience='global_mix'`), **15 minutes** (`duration_mins=15`, `ends_at` at creation), and **Edit / Go live** buttons. No separate `createpod` page. **Edit** means tapping title, audience or timer **directly on the card**; offer existing **Friends / Style Twins / Global** options and existing supported timer choices. Edits remain unsaved draft state until Go live; **Cancel creates no Pod and writes nothing**.
+- **Calls:** `lib/styleEngine.ts` `getStyleProfile` or `user_style_profile` to verify any style claim; inline card preloads valid photo and metadata. Only on **Go live**, require signed-in owner and call existing `lib/pods.ts` `createPod({owner_id,image_url,title,audience,duration_mins,ends_at,product_tags,product_colors,product_category})`. Use a single-flight Go-live guard, stable look-based idempotency key and server-reconciled uniqueness so repeated taps/retries **cannot insert two `pods` rows**. The created `pods.id` is the sole source for subsequent rendering. **No PR #4 merge or image generation is needed for Pod wiring**; test with a preexisting/mock look reference.
+- **After Go live:** Replace the visible ready state with an inline **Live Pod** card in the thread (append a `pod_live` history reference, do not rewrite the old timeline row). Show timer from `ends_at` plus **live yes/maybe/no** using existing `getPodVotes`, `getVoteCounts` and `subscribeToPodVotes` from `lib/pods.ts`; unsubscribe cleanly. Reuse `lib/share.ts` for share sheet/guest link, `api/pod-public/index.ts` and `api/pod-guest-vote/index.ts` for guests, `createPodInvites` and `lib/friends.ts` `createNotification` for Friends, and existing `screens/PodRecap.js`/ `calculateConfidence` data for recap; render updates inline, **not a new page**. Empty Friends list **must not prevent Pod creation**. Sharing/invites are after successful create; share errors do not roll it back.
+- **Saved:** The canonical `pods` row is created **only on Go live**. Existing `pod_votes`, `pod_invites`, notifications and recap stay in existing tables. In `chat_messages` append ID-only references for each short Stylist line and rendered card: **`pod_ready`** with `look_id`, **`pod_live`** with real `pod_id`, and **`pod_declined`** with `look_id` on **No**. The ready history row does **not** create a draft Pod. Store no duplicate Pod, vote, `try_on_history`, `user_events`, or style-profile records. **Cancel writes no new row at all**. Keep historical records append-only and dedupe ready/live events by look/action.
+- **Wait and visual state:** Rough, unmeasured **0–1 s** for a local ready card; **1–3 s** for Go live/Supabase creation, and live votes update as they arrive. Show Go live loading/disabled to prevent double taps; keep the hero and thread visible. Share sheet is an overlay, not a new page.
+- **Failures:** No current look -> no offer or button; not signed in -> sign-in request before Go live; `createPod` returns null/fails -> explain and **Retry**, leave card ready and **never fabricate a Pod or votes**; empty friends -> create anyway; share/invite failure -> Pod **remains live** in-thread and allow Retry Share. **No** remembers the decline permanently for that specific look; Cancel does nothing in the database. Never show fit information until Like/Try On/Buy under WF4.
+- **Cost per use:** **~$0 additional model/provider cost (estimate)**; existing Supabase Pod, invite, vote and timeline reads/writes only. No separate PR #4 dependency.
+- **Test:** No offer without real look; one offer per look including reload and persisted No; no Pod insert before Go live; Edit changes inline values; Go live creates **exactly one `pods` row** even after double tap/retry; timeline appends a row per card and uses IDs only; actual live subscription and cleanup; never a made-up score.
 
 ```mermaid
 flowchart TD
-  agent[Proactive suggestion] --> yes{User confirms?}
-  yes -->|No| stay[Keep look]
-  yes -->|Yes| create[Existing Pods create flow]
-  create --> live[Timer, votes, guest, recap]
+  look{Current look exists?} -->|No| hidden[Hide Pod offer]
+  look -->|Yes| decline{Already declined or offered?}
+  decline -->|Yes| silent[No repeated offer]
+  decline -->|No| say[Show approved short Pod line]
+  say --> ready[Append pod_ready ID-only history and render card]
+  ready --> choice{User action?}
+  choice -->|Edit| edit[Edit title, audience, timer inline]
+  edit --> ready
+  choice -->|Cancel| cancel[No new database writes]
+  choice -->|No| no[Append pod_declined look ID]
+  choice -->|Go live| auth{Signed in?}
+  auth -->|No| signin[Ask user to sign in]
+  auth -->|Yes| create[Idempotent createPod one pods row]
+  create --> result{Creation succeeded?}
+  result -->|No| retry[Leave ready card and Retry]
+  result -->|Yes| live[Append pod_live ID and render Live Pod]
+  live --> votes[subscribeToPodVotes yes maybe no and timer]
+  live --> share[Existing share, guest vote, Friends invites]
+  votes --> recap[Existing vote confidence and recap inline]
 ```
 
 ### 5. Style my closet — Workflow 2: closet + three looks
@@ -295,19 +339,21 @@ flowchart TD
 0a. Add a short rules-only AGENTS.md to MVPStyli linking to the canonical vision.
 0b. Install required PR-body vision-version CI check before implementation PRs.
 1. Map Shop, garments, navigation and PR #4 collision paths.
-2. Build Stylist shell with pinned chat and visual image area.
+2. Build the **one-screen** Stylist shell: hero + tags, one threaded history and inline card slots, bottom chips/chat.
 3. Apply verified owner mockup and Thanmayi theme/profile/wardrobe tokens (only after design access).
-4. Wire chat intent, existing style signals and catalog sheet.
+4. Wire chat intent, **private append-only Stylist timeline** (kind/card_type/payload migration), current style signals and same-screen catalog.
+6. Wire inline Pod ready/edit/live/recap and existing votes/shares, **independent of PR #4**.
 5. Add Elevate only after an on-screen look; catalog-only ranked items, interest-gated fit, user-owned garment copy, PR #4 synchronous receipt, server history and per-user cap.
-6. Wire proactive suggestion and confirmed Pod creation.
 7. Style my closet: enforce 3–4 photos, optional body photo, gated GPT-4.1 mini planner, three composed images via parallel PR #4 try-ons, private closet_items with RLS, optional profile question, swipe cards and Send to Pod.
 8. Add gated hourly Supabase pg_cron eligibility, per-user Vercel jobs, city/time zone, device calendar sync, Open-Meteo TEST weather, one WF2-composed try-on and text-only Expo push; keep mocked/dark until go-live.
 9. Offer one-per-look “I found this” and user-asked Buy links; catalog-first then capped SerpAPI, cards without size until interest, existing Fit Check and private deduplicated buy_intents; no checkout.
 
 ## Notes
-Workflows 1, 2, 3, 4 and 5 have owner approval dated 2026-11-10. All remaining feature workflows are pending owner review; these workflow approvals do not authorize live/paid use or merge this studio PR.
+The approved one-screen scope supersedes earlier suggestions to navigate to separate Pod creation/live/recap pages from Stylist. Existing standalone routes remain for backwards compatibility. Timeline uses **only references to canonical records** and must enforce owner-only RLS, removing temporary public policies in the original chat-history SQL.
 
-Task 2 must not write `App.js` until MVPStyli PR #4 is merged; if PR #4 remains open, use an isolated implementation that does not modify any PR #4 changed files. Task 5 reads but never edits `App.js` or any PR #4 file and requires both PR #4 ownership/history SQL migrations applied. Tasks 7 and 8 require PR #4 merged; task 8 additionally requires PR #4's history SQL applied and task 7's private closet_items and composition proven. Both remain gated by `STYLIT_TRYON_TEST_ENABLED` until final go-live approval. Task 9's optional Try On also requires PR #4 merged and that TEST gate; live SerpAPI and credentials stay off until go-live.
+Workflows 1, 2, 3, 4, 5 and 6 **and the one-screen design** have owner approval dated 2026-11-10. All remaining feature workflows are pending owner review; these workflow approvals do not authorize live/paid use or merge this studio PR.
+
+Task 2 must not write `App.js` until MVPStyli PR #4 is merged; if PR #4 remains open, use an isolated implementation that does not modify any PR #4 changed files. Task 6 follows Task 4, **not Task 5**, and has no direct or merge-order dependency on PR #4; use a mocked/existing look and preserve all current Pod services. Task 5 reads but never edits `App.js` or any PR #4 file and requires both PR #4 ownership/history SQL migrations applied. Tasks 7 and 8 require PR #4 merged; task 8 additionally requires PR #4's history SQL applied and task 7's private closet_items and composition proven. Both remain gated by `STYLIT_TRYON_TEST_ENABLED` until final go-live approval. Task 9's optional Try On also requires PR #4 merged and that TEST gate; live SerpAPI and credentials stay off until go-live.
 
 Every coding PR body must contain exactly `Vision version: v1` until the current version changes. CI must read the **current** exec.md on the studio default branch and fail missing, stale or unrecognized versions; never use archive/. When the owner changes the vision, copy the previous full exec.md text into dated archive file marked SUPERSEDED, update current exec.md with a new version/date, and adjust plans/checks. Coding chats must never read archive/.
 

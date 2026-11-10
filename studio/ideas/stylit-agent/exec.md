@@ -6,11 +6,11 @@ Status: proposed; owner starts work by merging this PR.
 ## Vision
 Stylit is an AI fashion agent. For Gen Z, style is identity: it shows who they could be, not just clothes, and acts before they ask.
 
-The ONE primary screen is Stylist (Agent), replacing Shop. Users see, talk and act there: looks, try-ons, products and Pods. Follow the owner's mockup: large try-on image on top, Current Outfit card, short AI Stylist message, chips for More Looks, Mix & Match, Color Analysis and Style Advice, and an always-bottom chat bar that grows only slightly while typing. Changes appear in the image rather than long text.
+The ONE screen is **Stylist (Agent)**, replacing Shop. The hero always keeps the user's **current-look photo at the top with small item tags**. Under it, one **scrollable, append-only history** has short Stylist lines and inline cards, oldest first and newest at bottom: Look, Pod ready, Live Pod (timer and live yes/maybe/no votes), Shop, Tomorrow's look, Closet three looks, and Try-on result. Users see, talk and act on this screen, with no separate create-Pod, Pod-live, or results page in the new flow. At the bottom are **Elevate, Mix & Match, Color, Style advice** chips and a **slim chat bar that expands only while typing**. Keep the outfit photo visible and update it for look changes; do not replace the visual experience with long AI text. Follow the owner's mockup/Figma for precise spacing. **Spaces are out of scope for now.**
 
 **Elevate Your Look appears only once an outfit or try-on image is already visible** (closet, earlier try-on, or tomorrow's look), never on an empty screen. Its short row uses active garment-catalog items with photo, brand, price and **Try On** but no size before the tap; tapping counts as interest and reveals existing Fit Check size, labeled profile size, or “size not confirmed.” It uses the on-screen look as the person image, a user-owned copy of the garment image and **only** the gated PR #4 Nano Banana route. Body-photo collection stays in the closet workflow, not Elevate.
 
-The Stylist says “tap here to see products” and opens a same-screen sheet of about ten items (image, brand, price, Try On). It speaks first using style intelligence: “I think this suits you. Not sure? I can run a Pod. I'd go Global.” A Pod starts only after the user agrees.
+The Stylist says “tap here to see products” and opens a same-screen sheet of about ten items (image, brand, price, Try On). Once a look exists, it may offer a quick vote **once per look**: **“I like this. Want a quick vote? I'd go Global.”** An inline Pod-ready card is filled in for them: current photo, suggested title, Global, 15 minutes, Edit and Go live. Editing happens on the card; **only Go live creates a Pod**, which becomes a Live Pod card with timer and live votes in the same history. “No” means never offer again for that look. Say **“this matches your style” only when the look's tags, colors, or category actually overlap the stored style profile**; never invent a look-level score.
 
 After 3–4 closet photos, show three try-ons: closet-based, elevated and complete makeover. Ask a style question during generation and use answers to personalize future advice. Each look has Send to Pod.
 
@@ -25,7 +25,7 @@ Pods are the core USP: friends, style twins and global voters help validate each
 One visual interaction and proactive outfit advice while existing try-on, Pods, wardrobe, profiles and Fit Check continue working. All implementation goes to killbill2792/MVPStyli, never this studio repo.
 
 ## Out of scope
-A second primary screen, separate bots, new image-model integration, rebuilding existing intelligence, live checkout, and unapproved production/App Store/paid API/secret changes.
+Spaces, a second primary screen, separate pages for new Stylist cards or Pod setup/live results, separate bots, new image-model integration, rebuilding existing intelligence, live checkout, and unapproved production/App Store/paid API/secret changes.
 
 ## Open questions
 The owner's mockup and Thanmayi's Nov 4 Figma files (Trello tz4sewiZ) were not accessible here. Obtain them; do not invent visuals. Calendar, location and push permissions must be designed before nightly enablement.
