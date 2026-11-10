@@ -1,0 +1,22 @@
+name: PR repository marker
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+permissions:
+  contents: read
+jobs:
+  repository-marker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      # Read the trusted base branch, not code supplied by an untrusted PR.
+      - uses: actions/checkout@v4
+        with:
+          ref: \${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - name: Verify repository marker (absent is warning only)
+        env:
+          PR_BODY: \${{ github.event.pull_request.body }}
+        run: node .github/scripts/pr-markers.cjs
+      - name: Marker parser tests
+        run: node --test .github/scripts/pr-markers.test.cjs
