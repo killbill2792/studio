@@ -2,6 +2,9 @@
 
 Status: proposed; all code later in killbill2792/MVPStyli
 
+## Current vision
+Read [exec.md — v1](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md) for the only current vision. This file is implementation design, not a second vision.
+
 ## Architecture
 The app uses `App.js` route state and `components/BottomBar.js`. `shop` shows an inline grid; `chat` shows `screens/ChatScreen.js`; `account` renders `screens/StyleVaultScreen.js`; `userprofile` renders `screens/UserProfileScreen.js`; `tryon`, `product`, `podshome`, `createpod`, `podlive`, `podguest` and `podrecap` remain. `screens/AccountScreen.js` is not the active account route. Preserve Explore and StyleCraft. Use a Stylist route in place of Shop, not a new app.
 
@@ -109,6 +112,8 @@ flowchart TD
 ```
 
 ## Task and PR merge order
+0a. Add a short rules-only AGENTS.md to MVPStyli linking to the canonical vision.
+0b. Install required PR-body vision-version CI check before implementation PRs.
 1. Map Shop, garments, navigation and PR #4 collision paths.
 2. Build Stylist shell with pinned chat and visual image area.
 3. Apply verified owner mockup and Thanmayi theme/profile/wardrobe tokens (only after design access).
@@ -120,4 +125,6 @@ flowchart TD
 9. Show fit-aware find-and-buy links, not checkout.
 
 ## Notes
+Every coding PR body must contain exactly `Vision version: v1` until the current version changes. CI must read the **current** exec.md on the studio default branch and fail missing, stale or unrecognized versions; never use archive/. When the owner changes the vision, copy the previous full exec.md text into dated archive file marked SUPERSEDED, update current exec.md with a new version/date, and adjust plans/checks. Coding chats must never read archive/.
+
 Each task is one PR in MVPStyli. Every task defines read-only `uses` and writable `edits`. Follow its AGENTS.md merge rules; wait until a parent is proven on default branch; rebase later tasks in order and fix clashes. Never edit PR #4 files. Since PR #4 changes `App.js` and `screens/StyleVaultScreen.js`, any task that needs them waits for its merge and bases on top; do not race it. Never add secrets. Merging this planning PR is feature-start approval, **not** production/paid approval.

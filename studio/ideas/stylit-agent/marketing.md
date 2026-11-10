@@ -2,14 +2,14 @@
 
 Status: waiting until the feature is merged and proven
 
-## Audience
-Gen Z fashion users who want to try identities, shop with confidence and ask friends.
+## Current vision
+Use [exec.md — v1](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md) as the only vision source. Do not copy it here.
 
-## Message
-Your stylist thinks ahead: see your next look, try it on and ask a Pod.
+## Audience and message
+Draft only after proof; validate all promises against the current vision.
 
 ## Where it will be posted
-Owner-approved channels only, after the release is proven.
+Owner-approved channels only after the release is proven.
 
 ## Draft
-Claude Medium writes after proof; Muse posts after approval. Never use Claude Max. Do not claim nightly looks, purchases or model quality until verified.
+Claude Medium writes after proof; Muse posts after approval. Never use Claude Max.

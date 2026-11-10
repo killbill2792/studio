@@ -2,25 +2,22 @@
 
 Status: proposed
 
+## Current vision
+Read **[exec.md — current version v1](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md)** as the only vision source. This file defines product behavior and acceptance detail, not a second vision.
+
 ## Who it is for
-Gen Z users who use style to express identity and want help acting on it.
+People using Stylit for styling advice and shared outfit feedback.
 
-## Experience
-One primary Stylist (Agent) screen replaces the Shop tab. Follow the owner's mockup: large try-on image at top; Current Outfit card; AI Stylist panel with one short message; Elevate Your Look item row with Try On on each card; chips for More Looks, Mix & Match, Color Analysis and Style Advice; chat bar pinned at bottom, growing only slightly while typing. Results update the image, not a long transcript.
+## Experience specification
+Implement the Stylist as an image-first screen with accessible controls and a stable bottom input. Keep every activity on the Stylist route when a sheet or panel can handle it; navigate to existing Pods or detail flow only as needed.
 
-Product search says “tap here to see products.” Tapping opens an in-screen sheet with about ten image/brand/price/Try On cards. Closing returns to the same outfit and chat.
-
-The Stylist speaks first with a reason from style intelligence and can suggest “I can run a Pod. I'd go Global.” It creates a Pod only after Yes. Friends, style twins and global audiences still use the existing Pod experience.
-
-Upload 3–4 closet photos to get three looks: from my closet, elevated, complete makeover. While images generate, a small style question invites an answer that improves later suggestions. Each look has Send to Pod.
-
-With consent, the app's own nightly backend uses closet, calendar event and weather to prepare tomorrow's look and push its image. Recommendations show Fit Profile size when supported; V1 opens a store link, not checkout.
+Sheet shows approximately ten catalog results with image, brand, price and Try On. Preserve the displayed outfit under the sheet. Consent is required to create a Pod, upload photos, personalize responses or send pushes. Show partial results as generated images arrive, not as a wall of chat text.
 
 ## In scope
-Reuse Pods, color season, manual Fit Profile, rule-based Fit Check, style fingerprint/twins, StyleVault, garment catalog and existing search. Rework visual presentation around one Stylist entry point.
+Use the exact behaviors, scope and existing feature boundaries in exec.md; use dev.md for API, storage, failures and wait states. Verify design against the owner's mockup and Thanmayi's Figma source.
 
 ## Out of scope
-Replacing Pod voting, rewriting try-on, invented fit sizes, autonomous purchasing, and turning on paid or live services without the final owner gate.
+Changes to protected try-on code, paid/live enablement or speculative sizes.
 
-## Open questions for the owner
-Use the owner's mockup and Thanmayi's Nov 4 Figma wireframes (Trello tz4sewiZ). Neither was provided as an accessible design artifact; exact theme, layout sizes and profile/wardrobe restyle remain unverified.
+## Open questions
+Exact colors and spacing await reference access. Do not guess.

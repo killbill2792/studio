@@ -1,8 +1,10 @@
 {
   "product": "stylit",
   "idea": "stylit-agent",
-  "plan_version": 1,
+  "plan_version": 2,
   "merge_order": [
+    "0a",
+    "0b",
     "1",
     "2",
     "3",
@@ -14,6 +16,56 @@
     "9"
   ],
   "tasks": [
+    {
+      "id": "0a",
+      "title": "Add rules-only MVPStyli AGENTS.md",
+      "goal": "Create one short root AGENTS.md with merge/approval/no-archive rules and a direct link to the current studio exec.md; no vision narrative.",
+      "edits": [
+        "AGENTS.md",
+        "tests/stylist/agentsRules.test.cjs"
+      ],
+      "uses": [
+        "studio/ideas/stylit-agent/exec.md (read via canonical GitHub link)"
+      ],
+      "files": [
+        "AGENTS.md",
+        "tests/stylist/agentsRules.test.cjs",
+        "studio/ideas/stylit-agent/exec.md (read via canonical GitHub link)"
+      ],
+      "depends_on": [],
+      "acceptance": [
+        "CI: node tests/stylist/agentsRules.test.cjs verifies one root AGENTS.md, canonical exec.md link, no duplicate vision or archive reads, and rules-only format."
+      ],
+      "status": "proposed"
+    },
+    {
+      "id": "0b",
+      "title": "Enforce current vision version in PR CI",
+      "goal": "Require each MVPStyli coding PR body to declare Vision version: vN, matching the current studio exec.md on main; missing, old and unknown versions fail.",
+      "edits": [
+        ".github/workflows/vision-version.yml",
+        "scripts/check-vision-version.cjs",
+        "tests/stylist/visionVersion.test.cjs"
+      ],
+      "uses": [
+        "AGENTS.md",
+        "https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md"
+      ],
+      "files": [
+        ".github/workflows/vision-version.yml",
+        "scripts/check-vision-version.cjs",
+        "tests/stylist/visionVersion.test.cjs",
+        "AGENTS.md",
+        "https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md"
+      ],
+      "depends_on": [
+        "0a"
+      ],
+      "acceptance": [
+        "CI: node tests/stylist/visionVersion.test.cjs tests matching/missing/stale PR-body versions using a mocked canonical source; workflow runs checker on pull_request and fails a mismatch against current studio main."
+      ],
+      "status": "proposed"
+    },
     {
       "id": "1",
       "title": "Map Shop, garments and routes",
@@ -38,7 +90,9 @@
         "screens/ProductScreen.js",
         "screens/StyleVaultScreen.js"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "0b"
+      ],
       "acceptance": [
         "CI: node tests/stylist/shopMap.test.cjs checks documented routes, product-detail links, garment and size dependencies against source."
       ],
@@ -318,5 +372,6 @@
       ],
       "status": "proposed"
     }
-  ]
+  ],
+  "vision_version": "v1"
 }
