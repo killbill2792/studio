@@ -258,7 +258,7 @@
         {
           "repo": "killbill2792/MVPStyli",
           "pull_request": 4,
-          "require": "Task 1 must never edit PR4 changed files regardless of merge status; protected local styling reconciled only in later tasks after PR4 merge; direct work may be incomplete until then"
+          "require": "Task 1 never edits PR4-changed files (even if merged); Task4 explicitly owns post-PR4-merge styling of App.js and screens/StyleVaultScreen.js, presentation-only; PR4 provider/upload/products/history files remain protected"
         }
       ],
       "allowed_file_policy": "Only paths in allowed_files may be written in Task 1; any new path or a PR #4 file is prohibited. Existing safe files may receive presentation-only changes; data, products, try_on_history and try-on logic must not change.",
@@ -271,7 +271,7 @@
         "CI: back/close/edit/settings/menus/textfields/tabs/utility controls have no custom animations; Reduce Motion disables effect and prevents confetti/shimmer while preserving state and content; haptics optional and safe.",
         "CI: try-on keeps user photo visible with sub-second shimmer/scan cycles and separate <1s top-down reveal, no blank spinner, fake progress or client history writes; vote effects use real vote counts; no fake streaks.",
         "CI: git diff for task1 contains only allowed_files, and has ZERO overlap with PR4 changed files (including App.js, screens/StyleVaultScreen.js, lib/tryon.ts, lib/productApi.js, lib/upload.ts, APIs, migrations); no modifications to try_on_history or products path.",
-        "CI: future website work is not changed. Task1 includes a factual deferred-coverage note listing protected screens requiring post-PR4 integration."
+        "CI: future website work is not changed. Task1 includes a factual deferred-coverage note listing protected screens requiring Task4 post-PR4 styling."
       ]
     },
     {
@@ -390,16 +390,18 @@
     {
       "id": "4",
       "title": "Apply verified design system",
-      "goal": "Match owner's final 12:13 interaction model using screenshot and Thanmayi Figma: exactly four chips, current-look hero, real thumbnails, AI Stylist sheet, History menu, inline cards, and context menu Style this/Fit for you/Buy.",
+      "goal": "Match owner's final 12:13 interaction model using screenshot and Thanmayi Figma: exactly four chips, current-look hero, real thumbnails, AI Stylist sheet, History menu, inline cards, and context menu Style this/Fit for you/Buy. This is the explicitly authorized post-PR4-merge reconciliation task: apply presentation-only shared branding to App.js (route shell only) and screens/StyleVaultScreen.js after PR4 merges, without editing its try-on, history, product, API, upload or ownership logic.",
       "edits": [
         "lib/stylistTheme.js",
         "components/StylistLayout.js",
         "screens/StylistScreen.js",
-        "tests/stylist/design.test.cjs"
+        "tests/stylist/design.test.cjs",
+        "App.js",
+        "screens/StyleVaultScreen.js",
+        "tests/stylist/protectedBrandReconciliation.test.cjs"
       ],
       "uses": [
         "lib/designSystem.js",
-        "screens/StyleVaultScreen.js",
         "screens/UserProfileScreen.js",
         "components/CurrentOutfitPanel.js",
         "components/StylistSheet.js",
@@ -410,8 +412,10 @@
         "components/StylistLayout.js",
         "screens/StylistScreen.js",
         "tests/stylist/design.test.cjs",
-        "lib/designSystem.js",
+        "App.js",
         "screens/StyleVaultScreen.js",
+        "tests/stylist/protectedBrandReconciliation.test.cjs",
+        "lib/designSystem.js",
         "screens/UserProfileScreen.js",
         "components/CurrentOutfitPanel.js",
         "components/StylistSheet.js",
@@ -424,7 +428,9 @@
         "CI: node tests/stylist/design.test.cjs verifies tokens, accessibility, responsive hero/current-outfit/sheet/overflow layout and card expansion states; visual snapshots compare with owner reference when accessible.",
         "CI: real image thumbnails, compact slide-up/down sheet, two-option overflow, no Spaces and no default history full timeline; existing profile and StyleVault actions preserved.",
         "CI: design snapshot verifies four final chips, three-item context menu, three-looks More action, no retired chips or separate workflows.",
-        "CI: apply brand kit to Stylist and any PR4-protected style surfaces ONLY after PR4 merges, via a separate change scoped to this task; do not backdoor Task1 allowlist."
+        "CI: Task4 may write only its explicit allowed_files including App.js and screens/StyleVaultScreen.js for presentation-only shared-token adoption AFTER PR4 has merged/proven and Task4 is rebased onto it; no protected file is touched while PR4 is open.",
+        "CI: node tests/stylist/protectedBrandReconciliation.test.cjs verifies the Task1 coverage matrix's deferred PR4-overlap surfaces (App.js route/nav shell and StyleVaultScreen UI) now consume approved tokens/components, with all API, model, image ownership, server history, profile and product contracts unchanged.",
+        "CI: Task4 git diff does not edit PR4-owned try-on/client/model/history/upload/product/API/SQL files; App.js and StyleVaultScreen changes are style-only, tested and conflict-free with merged PR4."
       ],
       "status": "proposed",
       "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT; reference image must be obtained before visual sign-off",
@@ -432,7 +438,22 @@
         "lib/stylistTheme.js",
         "components/StylistLayout.js",
         "screens/StylistScreen.js",
-        "tests/stylist/design.test.cjs"
+        "tests/stylist/design.test.cjs",
+        "App.js",
+        "screens/StyleVaultScreen.js",
+        "tests/stylist/protectedBrandReconciliation.test.cjs"
+      ],
+      "external_dependencies": [
+        {
+          "repo": "killbill2792/MVPStyli",
+          "pull_request": 4,
+          "require": "merged and proven on default branch before writing App.js or screens/StyleVaultScreen.js; rebase Task4 on the merged PR4 head; no edits to its protected model-call, upload, product, try_on_history or ownership files"
+        }
+      ],
+      "prerequisites": [
+        "PR4 merged and proven before Task4 edits PR4-overlapped App.js or StyleVaultScreen.js; if PR4 is still open, Task4 must not write those paths or claim brand coverage complete",
+        "Task1 screen-coverage matrix lists deferred surfaces",
+        "Presentation changes only; retain existing navigation, auth, profile, Pods, try-on/history and product behaviors"
       ]
     },
     {
