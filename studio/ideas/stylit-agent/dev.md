@@ -168,20 +168,45 @@ flowchart TD
   inbox --> open
 ```
 
-### 7. Find and buy
-**Pending owner review.**
-- Trigger/screen: Stylist says “I found this” before recommending a product; user taps Shop this item.
-- Calls and save: Use existing search/catalog and Fit Profile measurements in profiles; compare garment_sizes via lib/fitLogic.js and ProductScreen/AskAISheet rules; show size only with enough data, then Linking.openURL to verified merchant product link. No checkout or payment handling.
-- Wait/visible state: Estimated 1–3 s for catalog and sizing; show product preview and loading placeholder without freezing the outfit.
-- Failure: Unknown size -> 'size not confirmed'; missing link -> unavailable state; no fabricated size or purchase.
-- Cost per use: Existing catalog/search requests; SerpAPI credit only if web search is used; no checkout charges in V1.
+### 7. Find and buy — Workflow 4
+**Approved by owner 2026-11-10, 10:40 AM PT.**
+
+- **Trigger/screen:** Say **“I found this”** once when a **new shoppable look** is on the Stylist main image: after an Elevate Try On, an Elevated/Makeover closet look, or tomorrow's look. **Never on app open and never twice for the same look** (track the last offered look ID). Also respond when a user asks “find me a black jacket,” “buy this,” or “shop this.” The call-to-action is **Buy**, not “Shop this item.” The existing ~10-item catalog sheet from Workflow 1 remains the browsing path.
+- **Calls/picks:** Search the existing catalog **first** through `lib/garmentUtils.js` -> `GET /api/garments?active_only=true` -> `garments` and `garment_sizes`. Consider **only items with a real `product_link`**. If no relevant catalog result, make **one** fallback call through `lib/productSearch.ts` -> `POST /api/searchwebproducts` -> existing SerpAPI Google Shopping default. Reuse `lib/styleEngine.ts` for the style fingerprint and combine with color season and the current look for ranking; do not invent a style score or add a shopping API. Limit web searches **per user** and enforce the cap before calling the provider; no live search or keys until go-live approval.
+- **Display before interest:** Images and both catalog/look cards **always render photo, brand and price without any size or fit note**. On the Stylist screen show an over-outfit card: photo, brand, price, one honest line about why the item suits the look (no made-up score), **Try On** and **Buy**. Do not run Fit Check for every search result. Hide Buy for a product known to be out of stock; say **unavailable** and offer another pick.
+- **Interest / Fit Check:** Run sizing **only** after the user taps **Try On**, says/taps **“I like this”**, or says/taps **Buy** for that item. If profile measurements **and a usable size chart** exist, call `lib/fitLogic.js` **`recommendSizeAndFit`** with `garment_sizes` (catalog) or `lib/brandSizeCharts.js` / `brand_size_charts` (web item) and display **the recommended size plus one fit note**. On `INSUFFICIENT_DATA`, absent measurements or unavailable chart, show `profiles.top_size` or `profiles.bottom_size` as **“your profile size”** if appropriate; otherwise show **“size not confirmed”** and a short prompt to complete Fit Profile. Never guess sizes or block on live OCR. Keep this line on the interested item's Stylist card, not all other cards.
+- **Try On:** Use **only MVPStyli PR #4** try-on path, and only behind `STYLIT_TRYON_TEST_ENABLED` until the owner's go-live OK. On failure keep the original card/image and offer **Retry Try On** only.
+- **Buy V1:** After the interest sizing step, use `Linking.openURL` on a validated `product_link` (catalog) or `productUrl` (web). No payment charge, no in-app checkout. Keep the shown size in Stylit with a reminder like **“pick Size M on the store page”** when known; **do not claim** the merchant preselected it. No affiliate link rewriting in v1; future affiliate tracking requires a separate owner go-live approval.
+- **Saved:** Create a new **private `buy_intents`** table with `user_id`, `title`, `brand`, `price`, `image`, `store_url`, `source` (`garments` or `web`), `size_shown`, `size_source` (`fitcheck`, `profile`, `unconfirmed`), `opened_at`, and user-scoped RLS. Write **once** when a valid Buy link is opened; deduplicate repeated taps for the same intent. Optionally write a `user_events` row. **Do not use the `products` table** or create payment/order tables.
+- **Wait / visible state:** Rough estimates, not measured: **1–3 s catalog** or **2–5 s with one web search**; keep outfit and card visible with a small loading indicator. Fit Check uses existing local rules when data is available, with no mandatory OCR wait.
+- **Failure:** No size data or `INSUFFICIENT_DATA` -> profile size or **“size not confirmed”**; known out-of-stock -> hide Buy and offer another pick; broken or missing link -> **unavailable** with no guessed URL; search down/no key -> valid catalog items or an empty state and **Retry**, never fake products; Try On failure -> preserve card, Retry Try On only. Do not insert buy intent for an invalid link.
+- **Cost per use:** Catalog lookup **$0 marginal search-provider cost** (existing backend use); SerpAPI roughly **$0.01–$0.02/search**, **unverified estimate**. Only one fallback search per request under a per-user cap; test with mocked search and keep live search and secrets disabled until owner go-live approval. V1 Buy itself never charges the user.
 
 ```mermaid
 flowchart TD
-  suggest[Agent finds item] --> fit[Fit Profile and size chart]
-  fit --> card[Show size or unknown]
-  card --> link[Open merchant link]
-  link --> finish[Checkout outside Stylit]
+  source{Shoppable look or user request?} -->|New look once| suggest[Agent says I found this]
+  source -->|User asks| search[Catalog first]
+  suggest --> search
+  search --> catalog[GET api garments: linked items]
+  catalog --> found{Relevant item?}
+  found -->|No| capped{Web search under cap and enabled?}
+  capped -->|Yes| web[One existing SerpAPI search call]
+  capped -->|No| empty[Empty state or retry]
+  found -->|Yes| card[Stylist product card: no size]
+  web --> card
+  card --> interested{Try On, Like, or Buy?}
+  interested -->|No| browse[Keep size hidden]
+  interested -->|Yes| fit{Measurements and chart?}
+  fit -->|Yes| fitted[Fit Check size and note]
+  fit -->|No| fallback[Profile size or unconfirmed]
+  fitted --> action{Try On or Buy?}
+  fallback --> action
+  action -->|Try On| tryon[PR4 try-on TEST gated]
+  tryon --> tryonresult[Image or Retry Try On]
+  action -->|Buy| available{Valid link and available?}
+  available -->|No| unavailable[Unavailable; offer other pick]
+  available -->|Yes| intent[Dedup private buy_intents row]
+  intent --> merchant[Open merchant link; size reminder in Stylit]
 ```
 
 ### 8. Mix & Match chip
@@ -254,12 +279,12 @@ flowchart TD
 6. Wire proactive suggestion and confirmed Pod creation.
 7. Style my closet: enforce 3–4 photos, optional body photo, gated GPT-4.1 mini planner, three composed images via parallel PR #4 try-ons, private closet_items with RLS, optional profile question, swipe cards and Send to Pod.
 8. Add gated hourly Supabase pg_cron eligibility, per-user Vercel jobs, city/time zone, device calendar sync, Open-Meteo TEST weather, one WF2-composed try-on and text-only Expo push; keep mocked/dark until go-live.
-9. Show fit-aware find-and-buy links, not checkout.
+9. Offer one-per-look “I found this” and user-asked Buy links; catalog-first then capped SerpAPI, cards without size until interest, existing Fit Check and private deduplicated buy_intents; no checkout.
 
 ## Notes
-Workflows 1, 2 and 3 have owner approval dated 2026-11-10. All remaining feature workflows are pending owner review; these workflow approvals do not authorize live/paid use or merge this studio PR.
+Workflows 1, 2, 3 and 4 have owner approval dated 2026-11-10. All remaining feature workflows are pending owner review; these workflow approvals do not authorize live/paid use or merge this studio PR.
 
-Tasks 2 and 5 must not write `App.js` until MVPStyli PR #4 is merged; if PR #4 remains open, use an isolated implementation that does not modify any PR #4 changed files. Tasks 7 and 8 require PR #4 merged; task 8 additionally requires PR #4's history SQL applied and task 7's private closet_items and composition proven. Both remain gated by `STYLIT_TRYON_TEST_ENABLED` until final go-live approval.
+Tasks 2 and 5 must not write `App.js` until MVPStyli PR #4 is merged; if PR #4 remains open, use an isolated implementation that does not modify any PR #4 changed files. Tasks 7 and 8 require PR #4 merged; task 8 additionally requires PR #4's history SQL applied and task 7's private closet_items and composition proven. Both remain gated by `STYLIT_TRYON_TEST_ENABLED` until final go-live approval. Task 9's optional Try On also requires PR #4 merged and that TEST gate; live SerpAPI and credentials stay off until go-live.
 
 Every coding PR body must contain exactly `Vision version: v1` until the current version changes. CI must read the **current** exec.md on the studio default branch and fail missing, stale or unrecognized versions; never use archive/. When the owner changes the vision, copy the previous full exec.md text into dated archive file marked SUPERSEDED, update current exec.md with a new version/date, and adjust plans/checks. Coding chats must never read archive/.
 

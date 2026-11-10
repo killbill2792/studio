@@ -14,7 +14,7 @@ After 3–4 closet photos, show three try-ons: closet-based, elevated and comple
 
 With consent, the app's own nightly Vercel/Supabase backend makes tomorrow's look from closet, calendar event and weather and sends an Expo image push. No external bot.
 
-The agent proactively finds items and recommends a size based on Fit Profile only when the fit data supports it. V1 opens the store link. Real checkout needs separate go-live approval.
+Find-and-buy is triggered by “I found this” only after a shoppable look appears (Elevate Try On, an Elevated or Makeover closet look, or tomorrow's look), once per look, never at app open. The user can also ask to find or buy an item. Photo, brand and price always show with **no size** on look and catalog cards. When the user taps Try On or Buy, or says “I like this,” reveal a supported Fit Check size and a fit note; otherwise use a clearly labeled saved profile size or say “size not confirmed.” The button reads **Buy** and opens the store link; the user selects their own size on the store page. V1 has no checkout, payments or affiliate links. Live searches, paid APIs and affiliate links require separate owner go-live approval.
 
 ## Why this matters
 Pods are the core USP: friends, style twins and global voters help validate each look. Reuse current color-season analysis, Fit Profile, rule-based Fit Check, style fingerprint, StyleVault, garments API and SerpAPI search. Never rebuild these.

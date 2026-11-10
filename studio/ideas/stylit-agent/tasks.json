@@ -1,7 +1,7 @@
 {
   "product": "stylit",
   "idea": "stylit-agent",
-  "plan_version": 4,
+  "plan_version": 5,
   "merge_order": [
     "0a",
     "0b",
@@ -422,37 +422,78 @@
     },
     {
       "id": "9",
-      "title": "Fit-aware find and buy",
-      "goal": "Offer size only when Fit Profile and chart support it; open verified merchant link, not checkout.",
+      "title": "Find and buy after interest only",
+      "goal": "Proactively say 'I found this' once per shoppable look (never on app open), or respond to shopping requests. Catalog-first with product_link then one capped SerpAPI fallback. Cards show photo, brand and price but no size until Try On/Like/Buy. Fit Check only on interest, Buy opens verified store links, and writes one RLS-protected buy_intents row; no checkout.",
       "edits": [
         "lib/stylistShopping.js",
         "screens/StylistScreen.js",
+        "scripts/migrations/create_private_buy_intents.sql",
         "tests/stylist/findBuy.test.cjs"
       ],
       "uses": [
         "lib/fitLogic.js",
+        "lib/brandSizeCharts.js",
         "components/AskAISheet.js",
         "screens/ProductScreen.js",
         "lib/garmentUtils.js",
-        "lib/productSearch.ts"
+        "api/garments/index.ts",
+        "lib/productSearch.ts",
+        "api/searchwebproducts/index.ts",
+        "lib/styleEngine.ts",
+        "lib/designSystem.js",
+        "lib/tryonClient.ts",
+        "api/tryon/index.ts",
+        "lib/supabase.ts",
+        "profiles.top_size / profiles.bottom_size",
+        "brand_size_charts / garment_sizes"
       ],
       "files": [
         "lib/stylistShopping.js",
         "screens/StylistScreen.js",
+        "scripts/migrations/create_private_buy_intents.sql",
         "tests/stylist/findBuy.test.cjs",
         "lib/fitLogic.js",
+        "lib/brandSizeCharts.js",
         "components/AskAISheet.js",
         "screens/ProductScreen.js",
         "lib/garmentUtils.js",
-        "lib/productSearch.ts"
+        "api/garments/index.ts",
+        "lib/productSearch.ts",
+        "api/searchwebproducts/index.ts",
+        "lib/styleEngine.ts",
+        "lib/designSystem.js",
+        "lib/tryonClient.ts",
+        "api/tryon/index.ts",
+        "lib/supabase.ts",
+        "profiles.top_size / profiles.bottom_size",
+        "brand_size_charts / garment_sizes"
       ],
       "depends_on": [
         "8"
       ],
       "acceptance": [
-        "CI: node tests/stylist/findBuy.test.cjs tests missing fit/links and asserts only external URL opening, no purchase API."
+        "CI: node tests/stylist/findBuy.test.cjs verifies photo/brand/price on all cards and ZERO size/fit notes or Fit Check calls before user taps Try On, says/taps I like this, or says/taps Buy; only the interested item gets size and one fit note.",
+        "CI: Fit Check recommendSizeAndFit requires profile measurements plus catalog garment_sizes or brandSizeCharts/brand_size_charts for web; INSUFFICIENT_DATA falls back to labeled top_size/bottom_size, else 'size not confirmed' and Fit Profile prompt; no invented size or live OCR.",
+        "CI: proactive 'I found this' fires once per shoppable look after Elevate/Elevated/Makeover/tomorrow results, never at app open; user find/buy/shop requests work; call-to-action is Buy and catalog sheet still contains ~10 browse results.",
+        "CI: mock catalog-first GET /api/garments?active_only=true filters items without product_link; only one capped POST /api/searchwebproducts fallback; search missing key/outage returns real catalog items or empty + Retry, never fake products; no external calls in tests.",
+        "CI: Buy only calls Linking.openURL with validated product_link/productUrl; remembers known size with 'pick Size M on the store page' in Stylit but makes no claim of preselection; known out of stock hides Buy; broken/missing link disables it; no checkout/payment/affiliate calls.",
+        "CI: private buy_intents migration and RLS reject cross-user access; repeated taps write only one row with specified source/size provenance; optional user_events; never write products/payment/orders or intent for broken link.",
+        "CI: Try On calls only merged PR #4 path under STYLIT_TRYON_TEST_ENABLED; failure preserves the product card with Retry Try On only; live search and keys remain gated."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "external_dependencies": [
+        {
+          "repo": "killbill2792/MVPStyli",
+          "pull_request": 4,
+          "require": "merged before task 9 Try On integration; do not edit PR #4 files"
+        }
+      ],
+      "feature_gates": {
+        "try_on": "STYLIT_TRYON_TEST_ENABLED for test-only calls; requires PR #4 merged",
+        "web_search": "Mocked and disabled until owner's final go-live approval; never store or enable production keys",
+        "affiliates": "None in v1; later owner approval"
+      },
+      "workflow_approval": "Approved by owner 2026-11-10, 10:40 AM PT"
     }
   ],
   "vision_version": "v1"
