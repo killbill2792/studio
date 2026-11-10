@@ -1,0 +1,19 @@
+{
+  "product": "<product>",
+  "idea": "<idea>",
+  "plan_version": 1,
+  "merge_order": ["1"],
+  "tasks": [
+    {
+      "id": "1",
+      "title": "Short title",
+      "goal": "What this PR must achieve",
+      "edits": ["paths/this/task/may/write"],
+      "uses": ["paths/this/task/may/read"],
+      "files": ["optional short list; prefer edits and uses"],
+      "depends_on": [],
+      "acceptance": ["A checkable result"],
+      "status": "proposed"
+    }
+  ]
+}
