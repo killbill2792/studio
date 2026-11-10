@@ -1,7 +1,7 @@
 {
   "product": "stylit",
   "idea": "stylit-agent",
-  "plan_version": 7,
+  "plan_version": 8,
   "merge_order": [
     "0a",
     "0b",
@@ -102,20 +102,26 @@
     },
     {
       "id": "2",
-      "title": "One-screen Stylist hero and inline thread",
-      "goal": "Implement owner-approved one-screen Stylist shell: pinned main-look hero and item tags, a single newest-at-bottom scrollable history with inline placeholders for 7 card types, pinned chips and typing-only expanding chat bar. Never navigate from new Stylist flows to separate Pod/result pages; keep old app routes working. Avoid App.js until PR #4 merged.",
+      "title": "Outfit-first Stylist hero, Current Outfit and hidden History",
+      "goal": "Match owner-approved 11:24 one-screen reference: big hero user-in-look, floating Current Outfit real item thumbnails/brand/remove ×, bookmark/share, slide-up/down AI Stylist latest content, chips More Looks/Mix & Match/Color Analysis/Style Advice, slim typing-only chat bar. Hide full history on default view; three-dot menu only History and Saved looks & Pods. No Spaces, separate chats or pages; preserve legacy routes and PR4 file boundary.",
       "edits": [
         "screens/StylistScreen.js",
         "components/BottomBar.js",
         "App.js",
         "tests/stylist/shell.test.cjs",
         "components/StylistHistory.js",
-        "components/StylistHero.js"
+        "components/StylistHero.js",
+        "components/CurrentOutfitPanel.js",
+        "components/StylistSheet.js",
+        "components/StylistOverflowMenu.js"
       ],
       "uses": [
         "lib/AppContext.js",
         "screens/ChatScreen.js",
-        "docs/stylist/shop-map.md"
+        "docs/stylist/shop-map.md",
+        "screens/StyleVaultScreen.js",
+        "lib/share.ts",
+        "lib/OptimizedImage.js"
       ],
       "files": [
         "screens/StylistScreen.js",
@@ -124,17 +130,25 @@
         "tests/stylist/shell.test.cjs",
         "components/StylistHistory.js",
         "components/StylistHero.js",
+        "components/CurrentOutfitPanel.js",
+        "components/StylistSheet.js",
+        "components/StylistOverflowMenu.js",
         "lib/AppContext.js",
         "screens/ChatScreen.js",
-        "docs/stylist/shop-map.md"
+        "docs/stylist/shop-map.md",
+        "screens/StyleVaultScreen.js",
+        "lib/share.ts",
+        "lib/OptimizedImage.js"
       ],
       "depends_on": [
         "1"
       ],
       "acceptance": [
-        "CI: node tests/stylist/shell.test.cjs checks hero photo/item tags at top and one chronological thread newest at bottom, with accessible inline Look/Pod ready/Live Pod/Shop/Tomorrow/Closet/Try-on card placeholders and no new routes or Spaces.",
-        "CI: bottom chips are Elevate, Mix & Match, Color, Style advice; slim chat bar expands only while actively typing and collapses otherwise.",
-        "CI: old Explore, StyleVault, Try On, Pods and Shop-chat routes remain reachable; when PR #4 is unmerged no App.js or other PR #4 file is edited."
+        "CI: shell snapshot against owner screenshot: big current-look hero, real item thumbnails/brands/removable × in floating Current Outfit, bookmark and share buttons, slide-up/down AI Stylist sheet; no text-only tags in place of thumbnails.",
+        "CI: default UI contains no full history/thread list; overflow three-dot menu contains exactly History and Saved looks & Pods, no chat picker/list and no Spaces.",
+        "CI: bottom chips exactly More Looks, Mix & Match, Color Analysis, Style Advice; slim bar expands only when typing; Elevate remains conditional row only when look exists.",
+        "CI: Current Outfit removal changes only current selection, not canonical closet/garments/timeline; bookmark uses existing saved fits and share is explicit/safe.",
+        "CI: old Explore, StyleVault, Try On, Pods and Shop-chat routes remain functional; no App.js or other PR #4-owned file change while PR #4 is open."
       ],
       "status": "proposed",
       "external_dependencies": [
@@ -145,12 +159,12 @@
           "fallback": "if not merged, must avoid App.js and every file touched by PR #4; no merge into main until conflicts are safely resolved"
         }
       ],
-      "one_screen_approval": "Approved by owner 2026-11-10, 11:05 AM PT"
+      "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT; supersedes default-visible history approved at 11:05 AM PT"
     },
     {
       "id": "3",
       "title": "Apply verified design system",
-      "goal": "Match owner mockup and Thanmayi profile/wardrobe/themes wireframes; retain existing actions.",
+      "goal": "Match owner reference screenshot and Thanmayi's verified Figma details for hero, Current Outfit thumbnails/panel, bookmark/share, AI Stylist slide sheet, History menu, chips, and expanded cards; preserve accessibility and existing actions.",
       "edits": [
         "lib/stylistTheme.js",
         "components/StylistLayout.js",
@@ -160,7 +174,10 @@
       "uses": [
         "lib/designSystem.js",
         "screens/StyleVaultScreen.js",
-        "screens/UserProfileScreen.js"
+        "screens/UserProfileScreen.js",
+        "components/CurrentOutfitPanel.js",
+        "components/StylistSheet.js",
+        "components/StylistOverflowMenu.js"
       ],
       "files": [
         "lib/stylistTheme.js",
@@ -169,28 +186,35 @@
         "tests/stylist/design.test.cjs",
         "lib/designSystem.js",
         "screens/StyleVaultScreen.js",
-        "screens/UserProfileScreen.js"
+        "screens/UserProfileScreen.js",
+        "components/CurrentOutfitPanel.js",
+        "components/StylistSheet.js",
+        "components/StylistOverflowMenu.js"
       ],
       "depends_on": [
         "2"
       ],
       "acceptance": [
-        "CI: node tests/stylist/design.test.cjs checks token use and accessible labels; snapshot check of reference layout."
+        "CI: node tests/stylist/design.test.cjs verifies tokens, accessibility, responsive hero/current-outfit/sheet/overflow layout and card expansion states; visual snapshots compare with owner reference when accessible.",
+        "CI: real image thumbnails, compact slide-up/down sheet, two-option overflow, no Spaces and no default history full timeline; existing profile and StyleVault actions preserved."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT; reference image must be obtained before visual sign-off"
     },
     {
       "id": "4",
-      "title": "Chat intents, private Stylist timeline and catalog sheet",
-      "goal": "Preserve existing product search and style signals, show ten-result sheet, and reuse chat_conversations/chat_messages with kind=stylist, an append-only ID-only card timeline and strict owner RLS. Existing chats are kind=shop and never mixed. Keep original user/ai message type for ChatScreen compatibility.",
+      "title": "One continuous Stylist chat, History view and inline Shop cards",
+      "goal": "Use existing chat_conversations/chat_messages as exactly one owner-scoped kind=stylist conversation across all days; history hidden on default, queried by day/card kind behind three-dot History with day dividers, jump-to-past restores hero; keep old kind=shop separate. Add card_type/payload ID references, strict RLS and inline Shop swipe card with See all N, never a separate Shop page/sheet or new history tables.",
       "edits": [
         "screens/StylistScreen.js",
-        "components/StylistCatalogSheet.js",
         "lib/stylistIntent.js",
         "tests/stylist/chatCatalog.test.cjs",
         "lib/stylistTimeline.js",
         "scripts/migrations/create_private_stylist_timeline.sql",
-        "tests/stylist/timeline.test.cjs"
+        "tests/stylist/timeline.test.cjs",
+        "components/StylistShopCard.js",
+        "components/StylistHistory.js",
+        "components/StylistOverflowMenu.js"
       ],
       "uses": [
         "screens/ChatScreen.js",
@@ -200,16 +224,20 @@
         "lib/garmentUtils.js",
         "api/garments/index.ts",
         "scripts/ADD_CHAT_HISTORY.sql",
-        "lib/supabase.ts"
+        "lib/supabase.ts",
+        "screens/StyleVaultScreen.js",
+        "lib/OptimizedImage.js"
       ],
       "files": [
         "screens/StylistScreen.js",
-        "components/StylistCatalogSheet.js",
         "lib/stylistIntent.js",
         "tests/stylist/chatCatalog.test.cjs",
         "lib/stylistTimeline.js",
         "scripts/migrations/create_private_stylist_timeline.sql",
         "tests/stylist/timeline.test.cjs",
+        "components/StylistShopCard.js",
+        "components/StylistHistory.js",
+        "components/StylistOverflowMenu.js",
         "screens/ChatScreen.js",
         "lib/styleEngine.ts",
         "lib/productSearch.ts",
@@ -217,19 +245,23 @@
         "lib/garmentUtils.js",
         "api/garments/index.ts",
         "scripts/ADD_CHAT_HISTORY.sql",
-        "lib/supabase.ts"
+        "lib/supabase.ts",
+        "screens/StyleVaultScreen.js",
+        "lib/OptimizedImage.js"
       ],
       "depends_on": [
         "3"
       ],
       "acceptance": [
-        "CI: node tests/stylist/chatCatalog.test.cjs mocks catalog and web search failures and verifies same-screen ten-card catalog sheet.",
-        "CI: node tests/stylist/timeline.test.cjs verifies chronological append-only short text and all card_type values, payloads only containing reference IDs and no duplicated pods/history/user events/style-profile snapshots.",
-        "CI: migration tests preserve type=user|ai and legacy ChatScreen, backfill old conversations to kind=shop and filter new kind=stylist, ensuring no cross-kind history.",
-        "CI: RLS/security tests prove original public USING(true) chat policies are removed by additive migration, chat rows owner-only, cross-user reads/inserts/updates denied and no exposed Stylist timeline.",
-        "CI: durable No event pod_declined prevents new offers for same look across reload, Cancel creates no new database write."
+        "CI: node tests/stylist/timeline.test.cjs guarantees exactly one kind=stylist conversation per user via unique user+kind=stylist constraint and race-safe get-or-create, all days append to it; legacy kind=shop messages isolated and type=user|ai stays compatible.",
+        "CI: default hides full History; three-dot only History and Saved looks & Pods. History queries same messages by day/kind, oldest-to-newest with day dividers and scrollback over all past days; jump to day/look/Pod restores authorized hero image and original scroll position on return.",
+        "CI: all historical Look/Elevate/Pod ready/Live Pod/Shop/Tomorrow/Closet/Try-on cards remain tappable and expand full screen within Stylist; Pod opens real live vote or expired recap and Try-on swaps/restores hero. Missing source shows safe unavailable state; no new primary pages.",
+        "CI: node tests/stylist/chatCatalog.test.cjs mocks 'show me a polka dot dress' and catalog/web errors, verifies inline horizontal swipe Shop card photo, brand, price, Try On, Buy and See all N with all results within Stylist; no separate Shop page/sheet and no size before interest.",
+        "CI: typed ID-only card payloads cover look, elevate, pod_ready, pod_live, shop, closet, tomorrow, tryon, pod_declined; never duplicate pods, try_on_history, user_events, or style profile data. Append-only timeline and durable No events.",
+        "CI: additive migration to existing chat tables only (no new history tables); existing chat public USING(true) policies removed, strict owner-only RLS and cross-user read/write rejected, backfill old chats kind=shop."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT"
     },
     {
       "id": "5",
@@ -318,7 +350,7 @@
     {
       "id": "6",
       "title": "Inline Pod-ready, Go live and live-vote cards",
-      "goal": "Offer once per real look; approved short line and truthful style overlap only. Auto-fill ready card (hero photo, title, Global, 15 min) with inline edit; only Go live creates one Pod. Append ID-only cards to Stylist history, show live timer/votes/shares/invites/recap inline, durable No; no PR #4 dependency.",
+      "goal": "Offer once per real look; approved short line and truthful style overlap only. Auto-fill ready card (hero photo, title, Global, 15 min) with inline edit; only Go live creates one Pod. Append ID-only cards to Stylist history, show live timer/votes/shares/invites/recap in the AI Stylist sheet with full-screen in-screen expansion on tap, durable No; no PR #4 dependency.",
       "edits": [
         "lib/stylistPods.js",
         "screens/StylistScreen.js",
@@ -338,7 +370,9 @@
         "screens/PodRecap.js",
         "api/pod-public/index.ts",
         "api/pod-guest-vote/index.ts",
-        "scripts/ADD_CHAT_HISTORY.sql"
+        "scripts/ADD_CHAT_HISTORY.sql",
+        "components/StylistHistory.js",
+        "components/StylistSheet.js"
       ],
       "files": [
         "lib/stylistPods.js",
@@ -357,7 +391,9 @@
         "screens/PodRecap.js",
         "api/pod-public/index.ts",
         "api/pod-guest-vote/index.ts",
-        "scripts/ADD_CHAT_HISTORY.sql"
+        "scripts/ADD_CHAT_HISTORY.sql",
+        "components/StylistHistory.js",
+        "components/StylistSheet.js"
       ],
       "depends_on": [
         "4"
@@ -365,12 +401,13 @@
       "acceptance": [
         "CI: node tests/stylist/podConsent.test.cjs no Pod prompt/button without current look; once per look from closet, try-on or tomorrow, or Send to Pod/user request; No writes durable pod_declined so no repeat after reload.",
         "CI: approved exact line 'I like this. Want a quick vote? I\\'d go Global.'; 'this matches your style' only for real tags/colors/category overlap with user_style_profile per get_users_good_at_style; no invented look score or confidence text.",
-        "CI: Pod-ready card is inline and visually same shape as Live Pod: current image, auto title, global_mix audience shown as Global and 15 minutes; Edit title/audience/timer in card; Cancel writes nothing and no createpod navigation.",
+        "CI: Pod-ready card is visible in slide-up AI Stylist sheet and the History view, and visually same shape as Live Pod: current image, auto title, global_mix audience shown as Global and 15 minutes; Edit title/audience/timer in card; Cancel writes nothing and no createpod navigation.",
         "CI: no pods insert until Go live; signed-in guard, double tap/retry idempotence inserts exactly one pods row; successful create appends pod_live reference ID, failed create leaves ready state with Retry and no fake Pod/votes.",
-        "CI: all inline cards append one chat_messages record with ID-only payload and correct kind=stylist; no duplicate pod/vote/try_on_history/user_events/style profile record and old shop chats not mixed.",
+        "CI: all current and historical cards append one chat_messages record with ID-only payload and correct kind=stylist; no duplicate pod/vote/try_on_history/user_events/style profile record and old shop chats not mixed.",
         "CI: use getPodVotes + getVoteCounts + subscribeToPodVotes for real yes/maybe/no with unsubscribe; timer uses pods.ends_at and shared data; recap uses existing calculateConfidence, not invented look score.",
         "CI: existing lib/share.ts, api/pod-public, api/pod-guest-vote, createPodInvites and createNotification reused; empty Friends still create; share/invite failure leaves real pod live with Retry Share.",
-        "CI: Fit not visible before Like/Try On/Buy; Pod wiring has no reference, merge-order or external dependency on PR #4."
+        "CI: Fit not visible before Like/Try On/Buy; Pod wiring has no reference, merge-order or external dependency on PR #4.",
+        "CI: current Pod ready/Live Pod is in AI Stylist sheet, not the full default history; tap historical Pod card to expand full-screen in Stylist, with active timer/live votes or expired recap and preserved history position."
       ],
       "status": "proposed",
       "workflow_approval": "Approved by owner 2026-11-10, 11:05 AM PT",
@@ -431,7 +468,8 @@
         "CI: node tests/stylist/threeLooks.test.cjs verifies 3–4 photos, required full-body profile image, immediate start (no More Looks action), optional question saved to profile, parallel 3 PR4 requests, and separate server composition of one garment image per look.",
         "CI: mock LLM planner verifies Closet uses only uploads, Elevated uses at most two catalog pieces, Makeover avoids previously recorded styles; tests verify partial success, failed-card Retry, swipe-card promotion and Send to Pod.",
         "CI: RLS/storage policy tests reject cross-user closet_items reads/writes; no client try_on_history writes; test-only gate prevents live image calls.",
-        "CI: PR #4 must report merged before this task branches/merges; assert STYLIT_TRYON_TEST_ENABLED gate is enforced."
+        "CI: PR #4 must report merged before this task branches/merges; assert STYLIT_TRYON_TEST_ENABLED gate is enforced.",
+        "CI: completed closet look cards persist as ID-only entries in the single Stylist conversation; current card appears in AI Stylist sheet, while past-day History can restore the selected card/photo without a new chat."
       ],
       "status": "proposed",
       "external_dependencies": [
@@ -494,7 +532,8 @@
         "CI: mocked on-device expo-calendar sync tests consent, event title/time freshness, profiles.timezone/city sign-in update, user-provided tomorrow event fallback, and Open-Meteo TEST-only city forecast.",
         "CI: mock WF2 planner/compositor and PR4 try-on; enforce only one composed look, exactly one retry then skip, server-only try_on_history, unique (user_id,local_date), and RLS on tomorrow_looks and per-device push tokens.",
         "CI: text-only push uses exact 'Tomorrow's look is ready.'; denied push leaves in-app notification; missing closet/body photo prompts; Stylist open renders photo, reason, Wear it/Show me more/Send to Pod with Global suggested.",
-        "CI: no live sends or cron jobs while dark; PR #4 merged + its server-only history SQL applied + task 7 closet_items/composition proven are required deployment gates."
+        "CI: no live sends or cron jobs while dark; PR #4 merged + its server-only history SQL applied + task 7 closet_items/composition proven are required deployment gates.",
+        "CI: tapping a past Tomorrow card or its in-app notification restores the authorized look in the Stylist hero; history uses the same per-user conversation with day dividers and no extra chat table."
       ],
       "status": "proposed",
       "external_dependencies": [
@@ -514,13 +553,15 @@
     },
     {
       "id": "9",
-      "title": "Find and buy after interest only",
-      "goal": "Proactively say 'I found this' once per shoppable look (never on app open), or respond to shopping requests. Catalog-first with product_link then one capped SerpAPI fallback. Cards show photo, brand and price but no size until Try On/Like/Buy. Fit Check only on interest, Buy opens verified store links, and writes one RLS-protected buy_intents row; no checkout.",
+      "title": "Inline Shop and interest-gated Fit for you / Buy",
+      "goal": "Support once-per-look I found this and user shopping requests through an inline swipe Shop row (See all N), not separate page/sheet. Show photo/brand/price only before interest. Current Outfit thumbnail tap or Like/Try On/Buy opens Fit for you: size plus fit note, colorScoring great/good/ok/risky, and one real face/body line. Hero Why this works opens full supported look summary; Buy opens verified merchant link and writes a deduped private buy_intents row, no checkout.",
       "edits": [
         "lib/stylistShopping.js",
         "screens/StylistScreen.js",
         "scripts/migrations/create_private_buy_intents.sql",
-        "tests/stylist/findBuy.test.cjs"
+        "tests/stylist/findBuy.test.cjs",
+        "components/StylistFitForYouCard.js",
+        "components/StylistShopCard.js"
       ],
       "uses": [
         "lib/fitLogic.js",
@@ -537,13 +578,20 @@
         "api/tryon/index.ts",
         "lib/supabase.ts",
         "profiles.top_size / profiles.bottom_size",
-        "brand_size_charts / garment_sizes"
+        "brand_size_charts / garment_sizes",
+        "lib/colorScoring.js",
+        "lib/styleSuitability.js",
+        "components/CurrentOutfitPanel.js",
+        "components/StylistHero.js",
+        "components/StylistHistory.js"
       ],
       "files": [
         "lib/stylistShopping.js",
         "screens/StylistScreen.js",
         "scripts/migrations/create_private_buy_intents.sql",
         "tests/stylist/findBuy.test.cjs",
+        "components/StylistFitForYouCard.js",
+        "components/StylistShopCard.js",
         "lib/fitLogic.js",
         "lib/brandSizeCharts.js",
         "components/AskAISheet.js",
@@ -558,7 +606,12 @@
         "api/tryon/index.ts",
         "lib/supabase.ts",
         "profiles.top_size / profiles.bottom_size",
-        "brand_size_charts / garment_sizes"
+        "brand_size_charts / garment_sizes",
+        "lib/colorScoring.js",
+        "lib/styleSuitability.js",
+        "components/CurrentOutfitPanel.js",
+        "components/StylistHero.js",
+        "components/StylistHistory.js"
       ],
       "depends_on": [
         "8"
@@ -566,11 +619,14 @@
       "acceptance": [
         "CI: node tests/stylist/findBuy.test.cjs verifies photo/brand/price on all cards and ZERO size/fit notes or Fit Check calls before user taps Try On, says/taps I like this, or says/taps Buy; only the interested item gets size and one fit note.",
         "CI: Fit Check recommendSizeAndFit requires profile measurements plus catalog garment_sizes or brandSizeCharts/brand_size_charts for web; INSUFFICIENT_DATA falls back to labeled top_size/bottom_size, else 'size not confirmed' and Fit Profile prompt; no invented size or live OCR.",
-        "CI: proactive 'I found this' fires once per shoppable look after Elevate/Elevated/Makeover/tomorrow results, never at app open; user find/buy/shop requests work; call-to-action is Buy and catalog sheet still contains ~10 browse results.",
+        "CI: proactive 'I found this' fires once per shoppable look after Elevate/Elevated/Makeover/tomorrow results, never at app open; user find/buy/shop requests work; call-to-action is Buy and inline swipe Shop card contains photo/brand/price, Try On/Buy and See all N inside Stylist.",
         "CI: mock catalog-first GET /api/garments?active_only=true filters items without product_link; only one capped POST /api/searchwebproducts fallback; search missing key/outage returns real catalog items or empty + Retry, never fake products; no external calls in tests.",
         "CI: Buy only calls Linking.openURL with validated product_link/productUrl; remembers known size with 'pick Size M on the store page' in Stylit but makes no claim of preselection; known out of stock hides Buy; broken/missing link disables it; no checkout/payment/affiliate calls.",
         "CI: private buy_intents migration and RLS reject cross-user access; repeated taps write only one row with specified source/size provenance; optional user_events; never write products/payment/orders or intent for broken link.",
-        "CI: Try On calls only merged PR #4 path under STYLIT_TRYON_TEST_ENABLED; failure preserves the product card with Retry Try On only; live search and keys remain gated."
+        "CI: Try On calls only merged PR #4 path under STYLIT_TRYON_TEST_ENABLED; failure preserves the product card with Retry Try On only; live search and keys remain gated.",
+        "CI: Current Outfit item tap, Like, Try On or Buy (and no other trigger) opens a small Fit for you card for only that item; supported recommendSizeAndFit result + one fit note, colorScoring.computeColorScore verdict great/good/ok/risky, and one supported styleSuitability face/body line. Missing inputs yield not-enough-data, never invented scores.",
+        "CI: Why this works hero action opens full supported face/skin/body summary for current look; no score fabricated and no Fit intelligence shown before interest.",
+        "CI: Shop user queries render inline swipe row with See all N, no separate Shop page/sheet; all results and past Shop cards remain usable within the same continuous Stylist conversation."
       ],
       "status": "proposed",
       "external_dependencies": [
@@ -585,7 +641,8 @@
         "web_search": "Mocked and disabled until owner's final go-live approval; never store or enable production keys",
         "affiliates": "None in v1; later owner approval"
       },
-      "workflow_approval": "Approved by owner 2026-11-10, 10:40 AM PT"
+      "workflow_approval": "Approved by owner 2026-11-10, 10:40 AM PT",
+      "one_screen_approval": "Approved by owner 2026-11-10, 11:24 AM PT (presentation and fit-on-interest rule); WF4 stays approved at 10:40 AM PT"
     }
   ],
   "vision_version": "v1"
