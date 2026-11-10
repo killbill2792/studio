@@ -44,21 +44,44 @@ flowchart TD
   reply --> action[Update image or offer action]
 ```
 
-### 2. Elevate / Try On
-**Pending owner review.**
-- Trigger/screen: Tap Try On on an Elevate item; outfit image remains visible.
-- Calls and save: Resolve garment/image and current person photo; server calls PR #4's gated /api/tryon adapter -> Nano Banana -> server-owned image storage and try_on_history. App polls existing status and swaps the displayed image on success.
-- Wait/visible state: Estimated 10–20 s for one image (not measured); keep the prior image with progress and ask a style question.
-- Failure: Missing photo, TEST gate, quota or failure -> preserve old image and offer retry; never write history client-side.
-- Cost per use: Nano Banana provider charge per generation, amount unverified; storage and bandwidth extra. No call if gated.
+### 2. Elevate / Try On — Workflow 5
+**Approved by owner 2026-11-10, 10:51 AM PT.**
+
+- **Trigger/screen:** The **Elevate Your Look** row appears **only after** a closet look, earlier try-on, or tomorrow's look is already the Stylist's main image. **Never show the row on an empty screen.** Tap **Try On** on a row item. The **on-screen look image is always `human_img`**; no “upload body photo” branch in this workflow (WF2 handles body-photo collection).
+- **Items/calls:** Only active garments from `lib/garmentUtils.js` -> `GET /api/garments?active_only=true` -> `garments`, each with an image and a category mappable to PR #4. Rank with the current look, style fingerprint and color season using `lib/styleEngine.ts`. **No SerpAPI** for Elevate. Keep the row short, with its exact count set by the owner's mockup/Thanmayi Figma (not guessed here).
+- **Fit on interest:** Row cards always show **photo, brand, price and Try On**, with **no size** beforehand. **Tapping Try On is interest**: then run existing Fit Check `lib/fitLogic.js` with available measurements and size chart, display its supported size + one fit note; otherwise show a saved profile size labeled **“your profile size”**, or **“size not confirmed”** with Fit Profile prompt (WF4). Never invent a size or size all items.
+- **Prepare inputs:** Require a signed-in owner, validate the on-screen human image and garment. PR #4 rejects external garment image URLs and has an **empty catalog allowlist**: first call `lib/upload.ts` **`uploadRemoteImage`** to copy the chosen remote garment image into the signed-in user's own Storage path, verifying ownership. Reuse the category map already in `App.js`: `upper|upper_body → upper_body`, `lower|lower_body → lower_body`, `dress|dresses → dresses`. If the category is unmappable, **do not call** the API.
+- **Generate:** Call PR #4's injected client (`lib/tryonClient.ts` -> `lib/tryon.ts` `startTryOn`) with `POST /api/tryon` body `{human_img, garm_img, category}`. Only `STYLIT_TRYON_TEST_ENABLED` plus **reviewed TEST identity/configuration pins** can enable this. **No new model client or edits to PR #4 files.** The create call generates synchronously and returns **`jobId` as an owner-bound completion receipt**. `pollTryOn(jobId)` -> `GET /api/tryon/<jobId>` **only verifies** that receipt/result; it does **not** start another generation. The receipt expires after **15 minutes**; do not assume it is a long-running job.
+- **Save/display:** Replace the main look image with the successful result. Use PR #4's `lib/tryOnHistory.ts` `saveTryOnHistory({receipt: jobId, ...})` -> **`POST /api/tryon/history`**. Its server owns `try_on_history` inserts; **never insert from the app**. If history saving fails, **keep the new photo visible and show a warning**, without pretending history saved. **Optional `user_events` row decision: do not add one in Workflow 5**; preserve existing approved style events where applicable, and avoid a new table/write.
+- **Wait/screen:** **Estimated 10–20 s**, unmeasured. Keep the previous main photo visible during generation, show a short progress line, and ask **one optional style question**. Save an answer to the user's style profile following WF2; **never wait for an answer** before generating. After success, swap the photo.
+- **Failures:** Not signed in -> request sign-in; TEST gate off or `TEST_NOT_CONFIGURED` -> **“not available yet”**, with **no fake image**. Remote image copy or ownership check fails -> **“can't try on this item”** and offer another item. Unmappable category -> exclude it / no API call. `FORBIDDEN`, `TIMEOUT`, `RATE_LIMIT`, `PROVIDER_FAILURE`, `STORAGE_FAILURE` (or receipt expiry) -> keep the old photo and **Retry that item only**; no unrelated retries. History-save failure is a **warning after a successful photo**, not a failed generation.
+- **Cost/limits:** **~$0.03–$0.04 per try-on (unverified estimate)**, plus storage/traffic. Add a **server-enforced per-user daily generation cap before go-live**, with a safe disabled default until the owner authorizes a limit and paid/live access. Use test mocks and no unapproved provider use.
+- **Task gates:** Requires [MVPStyli PR #4](https://github.com/killbill2792/MVPStyli/pull/4) **merged and proven**, **both migrations applied and verified**: `scripts/migrations/20261031_server_only_try_on_history_writes.sql` and `scripts/migrations/20261105_current_user_image_ownership_rpc.sql`. Never edit any PR #4 file. `STYLIT_TRYON_TEST_ENABLED` and TEST pins remain mandatory; owner separately approves go-live.
 
 ```mermaid
 flowchart TD
-  tap[Try On] --> inputs[Check photo and garment]
-  inputs --> gated[PR4 gated try-on API]
-  gated --> model[Nano Banana via PR4 only]
-  model --> stored[Server stores image and history]
-  stored --> image[Swap outfit image]
+  visible{Main look image exists?} -->|No| hide[Hide Elevate row]
+  visible -->|Yes| catalog[Get active garments from garments API]
+  catalog --> rank[Rank by look style fingerprint and season]
+  rank --> row[Show short row without sizes]
+  row --> tap[Tap Try On and reveal fit or profile size]
+  tap --> auth{Signed in and mapped category?}
+  auth -->|No| stop[Sign in or choose another item]
+  auth -->|Yes| upload[Copy garment to user-owned upload]
+  upload --> owned{Copy and ownership verified?}
+  owned -->|No| other[Offer another item]
+  owned -->|Yes| gated{PR4 TEST gate and pins ready?}
+  gated -->|No| unavailable[Not available yet]
+  gated -->|Yes| create[POST tryon with human image, garment image, category]
+  create --> receipt[Sync generation returns signed receipt]
+  receipt --> verify[GET tryon job ID verifies result; 15 min expiry]
+  verify --> worked{Succeeded?}
+  worked -->|No| retry[Keep old photo; retry item only]
+  worked -->|Yes| swap[Replace main photo]
+  swap --> history[POST tryon history via PR4 client]
+  history --> saved{History saved?}
+  saved -->|No| warn[Keep new photo and warn]
+  saved -->|Yes| done[Show new look]
 ```
 
 ### 3. Product catalog sheet
@@ -275,16 +298,16 @@ flowchart TD
 2. Build Stylist shell with pinned chat and visual image area.
 3. Apply verified owner mockup and Thanmayi theme/profile/wardrobe tokens (only after design access).
 4. Wire chat intent, existing style signals and catalog sheet.
-5. Add Elevate/Try On through PR #4, without changing PR #4 files.
+5. Add Elevate only after an on-screen look; catalog-only ranked items, interest-gated fit, user-owned garment copy, PR #4 synchronous receipt, server history and per-user cap.
 6. Wire proactive suggestion and confirmed Pod creation.
 7. Style my closet: enforce 3–4 photos, optional body photo, gated GPT-4.1 mini planner, three composed images via parallel PR #4 try-ons, private closet_items with RLS, optional profile question, swipe cards and Send to Pod.
 8. Add gated hourly Supabase pg_cron eligibility, per-user Vercel jobs, city/time zone, device calendar sync, Open-Meteo TEST weather, one WF2-composed try-on and text-only Expo push; keep mocked/dark until go-live.
 9. Offer one-per-look “I found this” and user-asked Buy links; catalog-first then capped SerpAPI, cards without size until interest, existing Fit Check and private deduplicated buy_intents; no checkout.
 
 ## Notes
-Workflows 1, 2, 3 and 4 have owner approval dated 2026-11-10. All remaining feature workflows are pending owner review; these workflow approvals do not authorize live/paid use or merge this studio PR.
+Workflows 1, 2, 3, 4 and 5 have owner approval dated 2026-11-10. All remaining feature workflows are pending owner review; these workflow approvals do not authorize live/paid use or merge this studio PR.
 
-Tasks 2 and 5 must not write `App.js` until MVPStyli PR #4 is merged; if PR #4 remains open, use an isolated implementation that does not modify any PR #4 changed files. Tasks 7 and 8 require PR #4 merged; task 8 additionally requires PR #4's history SQL applied and task 7's private closet_items and composition proven. Both remain gated by `STYLIT_TRYON_TEST_ENABLED` until final go-live approval. Task 9's optional Try On also requires PR #4 merged and that TEST gate; live SerpAPI and credentials stay off until go-live.
+Task 2 must not write `App.js` until MVPStyli PR #4 is merged; if PR #4 remains open, use an isolated implementation that does not modify any PR #4 changed files. Task 5 reads but never edits `App.js` or any PR #4 file and requires both PR #4 ownership/history SQL migrations applied. Tasks 7 and 8 require PR #4 merged; task 8 additionally requires PR #4's history SQL applied and task 7's private closet_items and composition proven. Both remain gated by `STYLIT_TRYON_TEST_ENABLED` until final go-live approval. Task 9's optional Try On also requires PR #4 merged and that TEST gate; live SerpAPI and credentials stay off until go-live.
 
 Every coding PR body must contain exactly `Vision version: v1` until the current version changes. CI must read the **current** exec.md on the studio default branch and fail missing, stale or unrecognized versions; never use archive/. When the owner changes the vision, copy the previous full exec.md text into dated archive file marked SUPERSEDED, update current exec.md with a new version/date, and adjust plans/checks. Coding chats must never read archive/.
 

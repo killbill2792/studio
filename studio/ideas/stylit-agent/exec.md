@@ -6,7 +6,9 @@ Status: proposed; owner starts work by merging this PR.
 ## Vision
 Stylit is an AI fashion agent. For Gen Z, style is identity: it shows who they could be, not just clothes, and acts before they ask.
 
-The ONE primary screen is Stylist (Agent), replacing Shop. Users see, talk and act there: looks, try-ons, products and Pods. Follow the owner's mockup: large try-on image on top, Current Outfit card, short AI Stylist message, Elevate Your Look items each with Try On, chips for More Looks, Mix & Match, Color Analysis and Style Advice, and an always-bottom chat bar that grows only slightly while typing. Changes appear in the image rather than long text.
+The ONE primary screen is Stylist (Agent), replacing Shop. Users see, talk and act there: looks, try-ons, products and Pods. Follow the owner's mockup: large try-on image on top, Current Outfit card, short AI Stylist message, chips for More Looks, Mix & Match, Color Analysis and Style Advice, and an always-bottom chat bar that grows only slightly while typing. Changes appear in the image rather than long text.
+
+**Elevate Your Look appears only once an outfit or try-on image is already visible** (closet, earlier try-on, or tomorrow's look), never on an empty screen. Its short row uses active garment-catalog items with photo, brand, price and **Try On** but no size before the tap; tapping counts as interest and reveals existing Fit Check size, labeled profile size, or “size not confirmed.” It uses the on-screen look as the person image, a user-owned copy of the garment image and **only** the gated PR #4 Nano Banana route. Body-photo collection stays in the closet workflow, not Elevate.
 
 The Stylist says “tap here to see products” and opens a same-screen sheet of about ten items (image, brand, price, Try On). It speaks first using style intelligence: “I think this suits you. Not sure? I can run a Pod. I'd go Global.” A Pod starts only after the user agrees.
 

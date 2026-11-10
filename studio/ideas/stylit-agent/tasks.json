@@ -1,7 +1,7 @@
 {
   "product": "stylit",
   "idea": "stylit-agent",
-  "plan_version": 5,
+  "plan_version": 6,
   "merge_order": [
     "0a",
     "0b",
@@ -213,8 +213,8 @@
     },
     {
       "id": "5",
-      "title": "Elevate via PR #4 try-on",
-      "goal": "Wire Try On cards to PR #4 gated API and image replacement; no new model client. Gate: PR #4 must merge before editing App.js; otherwise avoid App.js and all PR #4 files.",
+      "title": "Elevate visible look via PR #4 try-on",
+      "goal": "Only show Elevate after a Stylist main look exists. Use active image-backed garments catalog (no SerpAPI), rank with style/color/current look, and keep row size-free until Try On. Copy remote garment into owner uploads, map category, call only PR #4 synchronous gated receipt API, verify once, save history server-only, keep image on history-save warning and handle failures. Add per-user daily cap before live use.",
       "edits": [
         "screens/StylistScreen.js",
         "lib/stylistTryOn.js",
@@ -222,37 +222,78 @@
       ],
       "uses": [
         "App.js",
+        "lib/garmentUtils.js",
+        "api/garments/index.ts",
+        "lib/styleEngine.ts",
+        "lib/fitLogic.js",
+        "lib/upload.ts",
         "lib/tryonClient.ts",
         "lib/tryon.ts",
+        "lib/tryOnHistory.ts",
         "api/tryon/index.ts",
-        "scripts/migrations/20261031_server_only_try_on_history_writes.sql"
+        "api/tryon/[id].ts",
+        "api/tryon/history.ts",
+        "lib/tryonTestPolicy.ts",
+        "scripts/migrations/20261031_server_only_try_on_history_writes.sql",
+        "scripts/migrations/20261105_current_user_image_ownership_rpc.sql"
       ],
       "files": [
         "screens/StylistScreen.js",
         "lib/stylistTryOn.js",
         "tests/stylist/tryOnAdapter.test.cjs",
         "App.js",
+        "lib/garmentUtils.js",
+        "api/garments/index.ts",
+        "lib/styleEngine.ts",
+        "lib/fitLogic.js",
+        "lib/upload.ts",
         "lib/tryonClient.ts",
         "lib/tryon.ts",
+        "lib/tryOnHistory.ts",
         "api/tryon/index.ts",
-        "scripts/migrations/20261031_server_only_try_on_history_writes.sql"
+        "api/tryon/[id].ts",
+        "api/tryon/history.ts",
+        "lib/tryonTestPolicy.ts",
+        "scripts/migrations/20261031_server_only_try_on_history_writes.sql",
+        "scripts/migrations/20261105_current_user_image_ownership_rpc.sql"
       ],
       "depends_on": [
         "4"
       ],
       "acceptance": [
-        "CI: node tests/stylist/tryOnAdapter.test.cjs mocks PR4, asserts no client history writes and image remains on failure.",
-        "CI: PR #4 status guard confirms merged before any App.js diff; if PR #4 is open, fail when this PR changes App.js or any PR #4-owned file."
+        "CI: node tests/stylist/tryOnAdapter.test.cjs verifies Elevate row hidden when no main look; visible for closet, prior try-on and tomorrow's look, row count configurable by design; uses main look as human_img and has no body-photo prompt.",
+        "CI: mock GET /api/garments?active_only=true filters inactive/missing-image/unmappable garments; rank against style fingerprint/color/current look; never use SerpAPI in Elevate; cards show image, brand, price and Try On, never size before Try On.",
+        "CI: tapping Try On is the only Elevate fit trigger: existing lib/fitLogic.js supported size + one note, else explicitly labeled profile size or 'size not confirmed'; no fabricated size.",
+        "CI: signed-in requirement, remote garment uploadRemoteImage into user-owned storage, ownership guard and exact App.js mapping upper/upper_body, lower/lower_body, dress/dresses; no API call for copy failure, ownership failure or unmappable category.",
+        "CI: mock PR #4's lib/tryonClient.ts and lib/tryon.ts: POST /api/tryon {human_img,garm_img,category} once, synchronous completion receipt jobId; GET /api/tryon/<jobId> verifies only within 15 minutes and never generates again; TEST gate and independent test pins fail closed.",
+        "CI: lib/tryOnHistory.ts POST /api/tryon/history with receipt, server-only try_on_history writes; history-save error leaves new photo and displays warning; no new user_events writes or client history inserts.",
+        "CI: progress keeps prior image, optional style question never blocks, success swaps photo; auth failure requests sign-in, TEST_NOT_CONFIGURED says 'not available yet', forbidden/timeout/rate-limit/provider/storage/receipt failures retain prior image and Retry that item only; no fake results.",
+        "CI: rate-limit test enforces per-user daily generation cap; cost remains documented as estimate; no paid/live calls without owner go-live approval.",
+        "CI: mandatory PR #4 merged/proven and both 20261031 history-write + 20261105 ownership RPC SQL applied verified before integration; no changes to App.js or any file owned by PR #4."
       ],
       "status": "proposed",
       "external_dependencies": [
         {
           "repo": "killbill2792/MVPStyli",
           "pull_request": 4,
-          "require": "merged before any App.js change",
-          "fallback": "if not merged, must avoid App.js and every file touched by PR #4; no merge into main until conflicts are safely resolved"
+          "require": "merged and proven on main before this task; cannot touch any PR #4 file, including App.js",
+          "sql_applied": [
+            "scripts/migrations/20261031_server_only_try_on_history_writes.sql",
+            "scripts/migrations/20261105_current_user_image_ownership_rpc.sql"
+          ]
         }
-      ]
+      ],
+      "prerequisites": [
+        "PR #4 merged and proven",
+        "Both PR #4 SQL migrations applied and checked in TEST",
+        "Test identity and catalog pins reviewed before any model invocation",
+        "Owner approval before any paid/live usage"
+      ],
+      "feature_gate": "STYLIT_TRYON_TEST_ENABLED + approved TEST pins; production disabled until owner go-live approval",
+      "workflow_approval": "Approved by owner 2026-11-10, 10:51 AM PT",
+      "estimated_cost_per_use": "~$0.03–$0.04/try-on, unverified; plus storage and traffic",
+      "daily_cap": "Server-enforced per-user daily generation cap before go-live; initially disabled pending owner-approved value; test cap before enabling",
+      "optional_user_events": "No new user_events write; keep existing approved style tracking only"
     },
     {
       "id": "6",

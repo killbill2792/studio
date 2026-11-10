@@ -6,7 +6,7 @@
 ## Handoff
 - Goal: Follow current exec.md. Do not restate vision here.
 - Status: proposed; no app code changed.
-- Owner decision: Workflow 1 (Stylist screen) **Approved by owner 2026-11-10, 10:18 AM PT**; Workflow 2 (Style my closet + three looks) **Approved by owner 2026-11-10, 10:22 AM PT**; Workflow 3 (tomorrow's look) **Approved by owner 2026-11-10, 10:36 AM PT**; Workflow 4 (find and buy) **Approved by owner 2026-11-10, 10:40 AM PT**. Other workflows pending owner review. Vision stays v1. **Merge of this studio PR is the separate feature-start approval**; do not merge automatically.
+- Owner decision: Workflow 1 (Stylist screen) **Approved by owner 2026-11-10, 10:18 AM PT**; Workflow 2 (Style my closet + three looks) **Approved by owner 2026-11-10, 10:22 AM PT**; Workflow 3 (tomorrow's look) **Approved by owner 2026-11-10, 10:36 AM PT**; Workflow 4 (find and buy) **Approved by owner 2026-11-10, 10:40 AM PT**; Workflow 5 (Elevate / Try On) **Approved by owner 2026-11-10, 10:51 AM PT**. Other workflows pending owner review. Vision stays v1. **Merge of this studio PR is the separate feature-start approval**; do not merge automatically.
 - Why: Owner's direction is recorded only in current exec.md.
 - Merge order: tasks 0a, 0b, 1–9; follow AGENTS.md and prove each parent before merging a child.
 - Code repo: killbill2792/MVPStyli only. This studio PR holds plans only.
@@ -48,6 +48,15 @@ flowchart TD
 - New RLS-protected `buy_intents` (`user_id`, title, brand, price, image, store_url, source `garments|web`, size_shown, size_source `fitcheck|profile|unconfirmed`, opened_at), dedup repeated taps; optional `user_events`. Never use missing `products` table.
 - Known out of stock or broken link -> no Buy, mark unavailable; search down/no key -> real catalog or empty + Retry; missing fit/`INSUFFICIENT_DATA` -> profile/unconfirmed; failed Try On -> retain card and Retry Try On only.
 - Rough waits **1–3 s catalog**, **2–5 s web**; catalog **$0 search-provider cost**, SerpAPI **~$0.01–$0.02/search (unverified)**. Task 9 must wait for PR #4 merged for Try On, gated by `STYLIT_TRYON_TEST_ENABLED`. No keys, live search, or affiliate use until owner go-live approval.
+
+## Workflow 5 locked requirements
+- **Approved by owner 2026-11-10, 10:51 AM PT.** Show Elevate row only if a closet/previous/tomorrow look is already the main photo. Never on an empty screen; no body-photo collection branch. Use the displayed look as `human_img`. Short row follows owner's mockup/Figma count.
+- Source active, image-backed and mappable garments **only** from `lib/garmentUtils.js` -> `GET /api/garments?active_only=true` (`garments`); rank with `lib/styleEngine.ts`, color season and the current look; **no SerpAPI**. Each card shows image, brand, price, Try On; **no size before Try On**. After the tap, existing `lib/fitLogic.js` Fit Check or labeled profile size / “size not confirmed” per WF4.
+- User must be signed in. Copy remote garment image into the user's owned uploads with `lib/upload.ts` `uploadRemoteImage` before try-on; PR #4 rejects external URLs and has no allowed catalog URLs. Use existing `App.js` category map to `upper_body/lower_body/dresses`; unmappable -> no call.
+- Use PR #4 **only**: `lib/tryonClient.ts` -> `lib/tryon.ts` `startTryOn/pollTryOn`, `POST /api/tryon {human_img,garm_img,category}`. Synchronous generation returns owner-bound `jobId` completion receipt; `GET /api/tryon/<jobId>` **verifies only**, with **15-minute** expiry. No new image client and no PR #4 file edits.
+- Save through `lib/tryOnHistory.ts` -> `POST /api/tryon/history`, with **server-only `try_on_history` writes**. Swap to successful image first; if history save fails, **keep photo, warn**. **No new `user_events` row** for WF5; retain existing approved style tracking.
+- **Estimated 10–20 s**, old photo + progress line + optional style question; save answers like WF2 without waiting. Not signed in -> sign in; gate off/`TEST_NOT_CONFIGURED` -> “not available yet”, never fake image; copy/ownership error -> another item; `FORBIDDEN/TIMEOUT/RATE_LIMIT/PROVIDER_FAILURE/STORAGE_FAILURE` -> keep old image and Retry only that item.
+- **Estimated $0.03–$0.04/try-on**, unverified. Server-enforced per-user daily generation cap required before go-live. Task 5 depends on **MVPStyli PR #4 merged** and **both SQL files applied**: `20261031_server_only_try_on_history_writes.sql` and `20261105_current_user_image_ownership_rpc.sql`; `STYLIT_TRYON_TEST_ENABLED` plus TEST pins, and owner go-live gate.
 
 ## Do not break
 - No vision drift: v1 is only in current exec.md. On owner-approved changes, archive the old text under archive/ marked SUPERSEDED and never read archive/ in coding chats. Every coding PR must state its vision version; CI rejects mismatch with the current exec.md version. MVPStyli AGENTS.md must contain rules and a link only, no copied vision.
