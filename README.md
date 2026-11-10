@@ -7,3 +7,5 @@ The root \`.github/\` folder contains copyable PR safety checks. Copy it into ne
 ## Repository authority
 
 The dispatcher should resolve each task's `repo` from its approved task ledger/`tasks.json` entry, **not** from text written by a coding chat. The task template therefore includes `repo: <owner>/<repository>`. An explicit PR-body `<!-- repo: owner/name task: id -->` is an optional warning/fail diagnostic: missing is a warning only; a stated but wrong repo is a real failure. Keep check failures routed through the existing dispatcher/Muse/original-PR-chat loop. The template intentionally does not install a second dispatcher or any new required check.
+
+The copied PR template intentionally uses a **nonmatching placeholder marker**. It produces a warning, never a false mismatch, until an authorized task/PR creator substitutes the real repository and task. Do not use an example `studio` marker as the default in every copied product repository.
