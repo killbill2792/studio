@@ -1,4 +1,4 @@
-<!-- repo: killbill2792/studio task: replace-with-task-id -->
+<!-- repo: <owner>/<repository> task: <task-id> -->
 <!-- Optional: aicafe-chat-url https://chatgpt.com/c/real-chat-id -->
 
 ## Change
