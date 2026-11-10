@@ -1,7 +1,7 @@
 {
   "product": "stylit",
   "idea": "stylit-agent",
-  "plan_version": 3,
+  "plan_version": 4,
   "merge_order": [
     "0a",
     "0b",
@@ -354,37 +354,71 @@
     },
     {
       "id": "8",
-      "title": "Tomorrow look scheduled preview",
-      "goal": "Build opt-in and test-only Vercel/Supabase cron-to-Expo pipeline with calendar/weather stubs, no live sends.",
+      "title": "Tomorrow's look: hourly gated backend",
+      "goal": "Build test-only hourly Supabase pg_cron selection (21:00 local, active within 7 days), one short Vercel job per user, device timezone/city and opt-in expo-calendar sync, Open-Meteo TEST weather, WF2 one-look picker/compositor, PR4 try-on retry once, owned look storage, in-app notice and text-only Expo push. Never enable live jobs or sends.",
       "edits": [
+        "scripts/migrations/create_tomorrow_looks_and_schedule.sql",
         "api/stylist-tomorrow/index.ts",
         "lib/stylistTomorrow.ts",
+        "lib/stylistCalendarSync.ts",
         "screens/StylistScreen.js",
         "tests/stylist/tomorrow.test.cjs"
       ],
       "uses": [
-        "vercel.json",
-        "lib/supabase.ts",
+        "api/stylist-looks/index.ts",
+        "api/_lib/stylistOutfitComposite.ts",
+        "scripts/migrations/create_private_closet_items.sql",
+        "lib/styleEngine.ts",
+        "lib/colorAnalysis.ts",
         "lib/tryonClient.ts",
-        "api/tryon/index.ts"
+        "api/tryon/index.ts",
+        "lib/supabase.ts",
+        "vercel.json",
+        "scripts/migrations/20261031_server_only_try_on_history_writes.sql"
       ],
       "files": [
+        "scripts/migrations/create_tomorrow_looks_and_schedule.sql",
         "api/stylist-tomorrow/index.ts",
         "lib/stylistTomorrow.ts",
+        "lib/stylistCalendarSync.ts",
         "screens/StylistScreen.js",
         "tests/stylist/tomorrow.test.cjs",
-        "vercel.json",
-        "lib/supabase.ts",
+        "api/stylist-looks/index.ts",
+        "api/_lib/stylistOutfitComposite.ts",
+        "scripts/migrations/create_private_closet_items.sql",
+        "lib/styleEngine.ts",
+        "lib/colorAnalysis.ts",
         "lib/tryonClient.ts",
-        "api/tryon/index.ts"
+        "api/tryon/index.ts",
+        "lib/supabase.ts",
+        "vercel.json",
+        "scripts/migrations/20261031_server_only_try_on_history_writes.sql"
       ],
       "depends_on": [
         "7"
       ],
       "acceptance": [
-        "CI: node tests/stylist/tomorrow.test.cjs verifies consent, timezone, dedupe, no-permission fallback and zero live pushes."
+        "CI: node tests/stylist/tomorrow.test.cjs checks pg_cron hourly eligibility at 21:00 local with IANA timezone/DST, last-active <=7 days, opt-in and one independently idempotent worker per user (never a >30 s batch).",
+        "CI: mocked on-device expo-calendar sync tests consent, event title/time freshness, profiles.timezone/city sign-in update, user-provided tomorrow event fallback, and Open-Meteo TEST-only city forecast.",
+        "CI: mock WF2 planner/compositor and PR4 try-on; enforce only one composed look, exactly one retry then skip, server-only try_on_history, unique (user_id,local_date), and RLS on tomorrow_looks and per-device push tokens.",
+        "CI: text-only push uses exact 'Tomorrow's look is ready.'; denied push leaves in-app notification; missing closet/body photo prompts; Stylist open renders photo, reason, Wear it/Show me more/Send to Pod with Global suggested.",
+        "CI: no live sends or cron jobs while dark; PR #4 merged + its server-only history SQL applied + task 7 closet_items/composition proven are required deployment gates."
       ],
-      "status": "proposed"
+      "status": "proposed",
+      "external_dependencies": [
+        {
+          "repo": "killbill2792/MVPStyli",
+          "pull_request": 4,
+          "require": "merged on main and history SQL scripts/migrations/20261031_server_only_try_on_history_writes.sql successfully applied before workflow 3 is enabled"
+        }
+      ],
+      "prerequisites": [
+        "Workflow 2 task 7 merged and proven: private closet_items RLS/storage plus multi-piece compositor",
+        "MVPStyli PR #4 merged and server-only try_on_history migration applied",
+        "Owner go-live approval required before scheduling, live weather commercial use, model requests, or push sends"
+      ],
+      "feature_gate": "dark/mocked until owner go-live; STYLIT_TRYON_TEST_ENABLED for TEST image calls",
+      "workflow_approval": "Approved by owner 2026-11-10, 10:36 AM PT"
     },
     {
       "id": "9",

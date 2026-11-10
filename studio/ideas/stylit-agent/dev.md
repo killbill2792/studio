@@ -20,8 +20,9 @@ flowchart TD
   app --> pod[Existing Pods screens and tables]
   app --> tryon[PR4 gated try-on server]
   tryon --> history[Owned storage and try_on_history]
-  cron[Vercel nightly schedule - gated] --> tryon
-  cron --> push[Expo push - gated]
+  cron[Hourly Supabase pg_cron - gated] --> worker[One Vercel job per eligible user]
+  worker --> tryon
+  worker --> push[Text-only Expo push - gated]
 ```
 
 ## Workflows
@@ -129,21 +130,42 @@ flowchart TD
   parallel --> failure[Failed card gets Retry; keep successes]
 ```
 
-### 6. Tomorrow's look nightly
-**Pending owner review.**
-- Trigger/screen: User opts in; existing Vercel scheduled job runs nightly in the user's time zone.
-- Calls and save: Scheduled Vercel function verifies auth/ownership and opt-in in Supabase, reads private closet, approved calendar event and consented location/weather, builds candidate look, calls PR #4 image service if enabled, stores user-owned result and delivery state, sends Expo push with image/link. No external bot. Nightly service and push go live only after owner approval.
-- Wait/visible state: Estimated 10–30 s of server work after the scheduled nightly start (not an interactive wait); show delivery status and the resulting next-day image.
-- Failure: No permissions/data, weather failure, job retry or Expo push failure -> skip or show safe closet-only suggestion; dedupe sends; never leak calendar/location.
-- Cost per use: Potential image generation per opted-in user/night + weather/API + Vercel/Supabase + Expo push; prices unverified; disabled until go-live gate.
+### 6. Tomorrow's look — Workflow 3
+**Approved by owner 2026-11-10, 10:36 AM PT.**
+
+- Trigger/screen: An **hourly Supabase pg_cron** job finds opted-in users whose IANA `profiles.timezone` local hour is **21:00**, who were active in the **last 7 days**, and who have not had tomorrow's local date processed. It enqueues **one independent job per user** for the existing Vercel backend. Never send one long batch to Vercel (**30 s function limit**). At sign-in, the app saves the device's IANA time zone and city/coarse location into new `profiles.timezone` and `profiles.city` fields; refresh on later sign-ins. No Dave or external bots. Only run scheduling after owner go-live approval.
+- Calls/inputs: Supabase `pg_cron` -> per-user authenticated/gated `api/stylist-tomorrow/index.ts` worker. Read user-owned `closet_items`, style fingerprint via `lib/styleEngine.ts`, color season, manual Fit Profile and full-body image from `profiles`. Weather: **Open-Meteo** free city forecast **for testing only**; its commercial plan or another provider is a separate owner go-live decision. Event: (a) what the user told the Stylist about tomorrow (saved in their style profile); (b) if opted in, titles and times of next-day calendar events from **expo-calendar on device**, read at the **last app open** and synced privately to the server. No backend calendar scraping. Calendar data may be stale; label or omit it when so.
+- Pick/image: Reuse Workflow 2's **server-side OpenAI GPT-4.1 mini** outfit picker to choose **one look** from closet, fingerprint, color and fit. Use Workflow 2's server composition step to make **one multi-piece garment image**, then call **only PR #4's gated Nano Banana try-on path**. Retry the generation **once** if it fails, then skip that night. Never edit PR #4 files or bypass its server-only history writes.
+- Saved: New private `tomorrow_looks` table: `user_id`, `local_date` (**unique with user_id**), `look_items`, private `image_path`, `weather`, `event`, `status`; RLS/user ownership and idempotent upsert prevent duplicate nightly jobs. Keep a try-on entry in `try_on_history` **server-only through PR #4**, and an in-app notifications row. Save Expo push tokens **per device** in a private `device_push_tokens` table (or a per-device profile-linked equivalent); enforce user ownership, token rotation and opt-out.
+- Wait/screen: Scheduled backend work, **not a user wait**. Rough estimate **20–30 s for one full try-on request**, excluding queue/weather/planning, and subject to Vercel's **30 s per-request limit**; split work into short independent jobs and persist status instead of timing out. Expo push is **text only**: **“Tomorrow's look is ready.”** An image inside the iOS notification requires a Notification Service Extension and a separate go-live decision.
+- Open: Tapping the push or in-app row opens the **Stylist** screen with tomorrow's image as the main photo, one concise reason (e.g. “58° and an interview — polished but warm”), and **Wear it / Show me more / Send to Pod** buttons. Suggest **Global** for Pod, but create it only on confirmation.
+- Failure: No closet -> push invites user to **add 3 photos**; no full-body photo -> ask for one. If push permission is denied, keep the look in-app without a push. If weather/calendar are unavailable or stale, use only available authorized signals and mark the reason accordingly. If generation fails, retry **once**, then mark skipped for that night; never send a false ready notice. Deduplicate retries and isolate jobs so one user never blocks another.
+- Cost per eligible active user/night: **~$0.04–$0.06, rough estimate only**, for one text-LLM pick, one image generation (up to one retry), weather, Supabase, Vercel and push usage. Cost and provider rights need validation. Schedule **only users active within 7 days**. Run with mocks and no external sends until the owner's final go-live approval. Gate image use behind `STYLIT_TRYON_TEST_ENABLED` in TEST.
 
 ```mermaid
 flowchart TD
-  cron[Nightly Vercel cron] --> consent[Check opt-in and user TZ]
-  consent --> sources[Closet calendar weather]
-  sources --> image[PR4 image path if gated on]
-  image --> save[Store owned result and dedupe]
-  save --> push[Expo push with image]
+  cron[Hourly Supabase pg_cron] --> eligible{Local 21:00 and active within 7 days?}
+  eligible -->|No| stop[Skip user]
+  eligible -->|Yes| enqueue[Queue one job per user]
+  enqueue --> worker[Gated short Vercel worker]
+  worker --> inputs[Private closet, style, fit, weather, event]
+  inputs --> enough{Closet and body photo present?}
+  enough -->|No| missing[Save in-app prompt and push if allowed]
+  enough -->|Yes| picker[WF2 server LLM picks one look]
+  picker --> compose[WF2 multi-piece compositor]
+  compose --> tryon[PR4 gated Nano Banana try-on]
+  tryon --> success{Succeeded?}
+  success -->|No| once[Retry once]
+  once --> retry{Retry succeeded?}
+  retry -->|No| skip[Mark night skipped]
+  retry -->|Yes| save[Idempotent tomorrow_looks + history]
+  success -->|Yes| save
+  save --> notice[Save in-app notification]
+  notice --> permission{Expo push allowed?}
+  permission -->|Yes| push[Text-only ready push]
+  permission -->|No| inbox[Keep look in app]
+  push --> open[Stylist shows image, reason, action buttons]
+  inbox --> open
 ```
 
 ### 7. Find and buy
@@ -231,13 +253,13 @@ flowchart TD
 5. Add Elevate/Try On through PR #4, without changing PR #4 files.
 6. Wire proactive suggestion and confirmed Pod creation.
 7. Style my closet: enforce 3–4 photos, optional body photo, gated GPT-4.1 mini planner, three composed images via parallel PR #4 try-ons, private closet_items with RLS, optional profile question, swipe cards and Send to Pod.
-8. Add opt-in, mocked nightly tomorrow look, permissions and Expo push path; do not enable production.
+8. Add gated hourly Supabase pg_cron eligibility, per-user Vercel jobs, city/time zone, device calendar sync, Open-Meteo TEST weather, one WF2-composed try-on and text-only Expo push; keep mocked/dark until go-live.
 9. Show fit-aware find-and-buy links, not checkout.
 
 ## Notes
-Workflow 1 and Workflow 2 have owner approval dated 2026-11-10. All remaining feature workflows are pending owner review; these workflow approvals do not authorize live/paid use or merge this studio PR.
+Workflows 1, 2 and 3 have owner approval dated 2026-11-10. All remaining feature workflows are pending owner review; these workflow approvals do not authorize live/paid use or merge this studio PR.
 
-Tasks 2 and 5 must not write `App.js` until MVPStyli PR #4 is merged; if PR #4 remains open, use an isolated implementation that does not modify any PR #4 changed files. Task 7 depends on PR #4 merged and must remain gated by `STYLIT_TRYON_TEST_ENABLED` until final go-live approval.
+Tasks 2 and 5 must not write `App.js` until MVPStyli PR #4 is merged; if PR #4 remains open, use an isolated implementation that does not modify any PR #4 changed files. Tasks 7 and 8 require PR #4 merged; task 8 additionally requires PR #4's history SQL applied and task 7's private closet_items and composition proven. Both remain gated by `STYLIT_TRYON_TEST_ENABLED` until final go-live approval.
 
 Every coding PR body must contain exactly `Vision version: v1` until the current version changes. CI must read the **current** exec.md on the studio default branch and fail missing, stale or unrecognized versions; never use archive/. When the owner changes the vision, copy the previous full exec.md text into dated archive file marked SUPERSEDED, update current exec.md with a new version/date, and adjust plans/checks. Coding chats must never read archive/.
 
