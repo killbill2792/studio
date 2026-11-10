@@ -1,0 +1,322 @@
+{
+  "product": "stylit",
+  "idea": "stylit-agent",
+  "plan_version": 1,
+  "merge_order": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+  ],
+  "tasks": [
+    {
+      "id": "1",
+      "title": "Map Shop, garments and routes",
+      "goal": "Record every Shop reader, catalog endpoint and cross-route dependency before removing UI.",
+      "edits": [
+        "docs/stylist/shop-map.md"
+      ],
+      "uses": [
+        "App.js",
+        "components/BottomBar.js",
+        "lib/garmentUtils.js",
+        "api/garments/index.ts",
+        "screens/ProductScreen.js",
+        "screens/StyleVaultScreen.js"
+      ],
+      "files": [
+        "docs/stylist/shop-map.md",
+        "App.js",
+        "components/BottomBar.js",
+        "lib/garmentUtils.js",
+        "api/garments/index.ts",
+        "screens/ProductScreen.js",
+        "screens/StyleVaultScreen.js"
+      ],
+      "depends_on": [],
+      "acceptance": [
+        "CI: node tests/stylist/shopMap.test.cjs checks documented routes, product-detail links, garment and size dependencies against source."
+      ],
+      "status": "proposed"
+    },
+    {
+      "id": "2",
+      "title": "Stylist screen shell",
+      "goal": "Replace Shop tab with a visual shell, current outfit, cards, chips and pinned growing chat bar; all local/mock.",
+      "edits": [
+        "screens/StylistScreen.js",
+        "components/BottomBar.js",
+        "App.js",
+        "tests/stylist/shell.test.cjs"
+      ],
+      "uses": [
+        "lib/AppContext.js",
+        "screens/ChatScreen.js",
+        "docs/stylist/shop-map.md"
+      ],
+      "files": [
+        "screens/StylistScreen.js",
+        "components/BottomBar.js",
+        "App.js",
+        "tests/stylist/shell.test.cjs",
+        "lib/AppContext.js",
+        "screens/ChatScreen.js",
+        "docs/stylist/shop-map.md"
+      ],
+      "depends_on": [
+        "1"
+      ],
+      "acceptance": [
+        "CI: node tests/stylist/shell.test.cjs checks Agent tab route and chat bar states without a network call."
+      ],
+      "status": "proposed"
+    },
+    {
+      "id": "3",
+      "title": "Apply verified design system",
+      "goal": "Match owner mockup and Thanmayi profile/wardrobe/themes wireframes; retain existing actions.",
+      "edits": [
+        "lib/stylistTheme.js",
+        "components/StylistLayout.js",
+        "screens/StylistScreen.js",
+        "tests/stylist/design.test.cjs"
+      ],
+      "uses": [
+        "lib/designSystem.js",
+        "screens/StyleVaultScreen.js",
+        "screens/UserProfileScreen.js"
+      ],
+      "files": [
+        "lib/stylistTheme.js",
+        "components/StylistLayout.js",
+        "screens/StylistScreen.js",
+        "tests/stylist/design.test.cjs",
+        "lib/designSystem.js",
+        "screens/StyleVaultScreen.js",
+        "screens/UserProfileScreen.js"
+      ],
+      "depends_on": [
+        "2"
+      ],
+      "acceptance": [
+        "CI: node tests/stylist/design.test.cjs checks token use and accessible labels; snapshot check of reference layout."
+      ],
+      "status": "proposed"
+    },
+    {
+      "id": "4",
+      "title": "Chat intents and catalog sheet",
+      "goal": "Reuse style signals and SerpAPI/garment search; show ~10 cards in same-screen sheet.",
+      "edits": [
+        "screens/StylistScreen.js",
+        "components/StylistCatalogSheet.js",
+        "lib/stylistIntent.js",
+        "tests/stylist/chatCatalog.test.cjs"
+      ],
+      "uses": [
+        "screens/ChatScreen.js",
+        "lib/styleEngine.ts",
+        "lib/productSearch.ts",
+        "api/searchwebproducts/index.ts",
+        "lib/garmentUtils.js",
+        "api/garments/index.ts"
+      ],
+      "files": [
+        "screens/StylistScreen.js",
+        "components/StylistCatalogSheet.js",
+        "lib/stylistIntent.js",
+        "tests/stylist/chatCatalog.test.cjs",
+        "screens/ChatScreen.js",
+        "lib/styleEngine.ts",
+        "lib/productSearch.ts",
+        "api/searchwebproducts/index.ts",
+        "lib/garmentUtils.js",
+        "api/garments/index.ts"
+      ],
+      "depends_on": [
+        "3"
+      ],
+      "acceptance": [
+        "CI: node tests/stylist/chatCatalog.test.cjs mocks catalog and search failure, verifies 10-card cap and closed/open sheet."
+      ],
+      "status": "proposed"
+    },
+    {
+      "id": "5",
+      "title": "Elevate via PR #4 try-on",
+      "goal": "Wire Try On cards to PR #4 gated API and image replacement; no new model client.",
+      "edits": [
+        "screens/StylistScreen.js",
+        "lib/stylistTryOn.js",
+        "tests/stylist/tryOnAdapter.test.cjs"
+      ],
+      "uses": [
+        "App.js",
+        "lib/tryonClient.ts",
+        "lib/tryon.ts",
+        "api/tryon/index.ts",
+        "scripts/migrations/20261031_server_only_try_on_history_writes.sql"
+      ],
+      "files": [
+        "screens/StylistScreen.js",
+        "lib/stylistTryOn.js",
+        "tests/stylist/tryOnAdapter.test.cjs",
+        "App.js",
+        "lib/tryonClient.ts",
+        "lib/tryon.ts",
+        "api/tryon/index.ts",
+        "scripts/migrations/20261031_server_only_try_on_history_writes.sql"
+      ],
+      "depends_on": [
+        "4"
+      ],
+      "acceptance": [
+        "CI: node tests/stylist/tryOnAdapter.test.cjs mocks PR4, asserts no client history writes and image remains on failure."
+      ],
+      "status": "proposed"
+    },
+    {
+      "id": "6",
+      "title": "Suggest and start Pod",
+      "goal": "Use style intelligence to suggest a global/friends/twins Pod; create only after confirmation.",
+      "edits": [
+        "lib/stylistPods.js",
+        "screens/StylistScreen.js",
+        "tests/stylist/podConsent.test.cjs"
+      ],
+      "uses": [
+        "lib/pods.ts",
+        "screens/PodsScreen.js",
+        "screens/PodLive.js",
+        "screens/PodRecap.js",
+        "lib/styleEngine.ts"
+      ],
+      "files": [
+        "lib/stylistPods.js",
+        "screens/StylistScreen.js",
+        "tests/stylist/podConsent.test.cjs",
+        "lib/pods.ts",
+        "screens/PodsScreen.js",
+        "screens/PodLive.js",
+        "screens/PodRecap.js",
+        "lib/styleEngine.ts"
+      ],
+      "depends_on": [
+        "5"
+      ],
+      "acceptance": [
+        "CI: node tests/stylist/podConsent.test.cjs asserts no Pod insert before Yes and checks cancel/retry."
+      ],
+      "status": "proposed"
+    },
+    {
+      "id": "7",
+      "title": "Closet and three looks",
+      "goal": "Upload 3–4 photos, generate three labeled images through PR4, ask question while waiting and link to Pod.",
+      "edits": [
+        "lib/stylistCloset.js",
+        "components/StylistLooks.js",
+        "screens/StylistScreen.js",
+        "tests/stylist/threeLooks.test.cjs"
+      ],
+      "uses": [
+        "lib/upload.ts",
+        "lib/garmentUtils.js",
+        "lib/tryonClient.ts",
+        "lib/styleEngine.ts",
+        "screens/PodsScreen.js"
+      ],
+      "files": [
+        "lib/stylistCloset.js",
+        "components/StylistLooks.js",
+        "screens/StylistScreen.js",
+        "tests/stylist/threeLooks.test.cjs",
+        "lib/upload.ts",
+        "lib/garmentUtils.js",
+        "lib/tryonClient.ts",
+        "lib/styleEngine.ts",
+        "screens/PodsScreen.js"
+      ],
+      "depends_on": [
+        "6"
+      ],
+      "acceptance": [
+        "CI: node tests/stylist/threeLooks.test.cjs uses mocked image path, tests partial completion, question and Pod links."
+      ],
+      "status": "proposed"
+    },
+    {
+      "id": "8",
+      "title": "Tomorrow look scheduled preview",
+      "goal": "Build opt-in and test-only Vercel/Supabase cron-to-Expo pipeline with calendar/weather stubs, no live sends.",
+      "edits": [
+        "api/stylist-tomorrow/index.ts",
+        "lib/stylistTomorrow.ts",
+        "screens/StylistScreen.js",
+        "tests/stylist/tomorrow.test.cjs"
+      ],
+      "uses": [
+        "vercel.json",
+        "lib/supabase.ts",
+        "lib/tryonClient.ts",
+        "api/tryon/index.ts"
+      ],
+      "files": [
+        "api/stylist-tomorrow/index.ts",
+        "lib/stylistTomorrow.ts",
+        "screens/StylistScreen.js",
+        "tests/stylist/tomorrow.test.cjs",
+        "vercel.json",
+        "lib/supabase.ts",
+        "lib/tryonClient.ts",
+        "api/tryon/index.ts"
+      ],
+      "depends_on": [
+        "7"
+      ],
+      "acceptance": [
+        "CI: node tests/stylist/tomorrow.test.cjs verifies consent, timezone, dedupe, no-permission fallback and zero live pushes."
+      ],
+      "status": "proposed"
+    },
+    {
+      "id": "9",
+      "title": "Fit-aware find and buy",
+      "goal": "Offer size only when Fit Profile and chart support it; open verified merchant link, not checkout.",
+      "edits": [
+        "lib/stylistShopping.js",
+        "screens/StylistScreen.js",
+        "tests/stylist/findBuy.test.cjs"
+      ],
+      "uses": [
+        "lib/fitLogic.js",
+        "components/AskAISheet.js",
+        "screens/ProductScreen.js",
+        "lib/garmentUtils.js",
+        "lib/productSearch.ts"
+      ],
+      "files": [
+        "lib/stylistShopping.js",
+        "screens/StylistScreen.js",
+        "tests/stylist/findBuy.test.cjs",
+        "lib/fitLogic.js",
+        "components/AskAISheet.js",
+        "screens/ProductScreen.js",
+        "lib/garmentUtils.js",
+        "lib/productSearch.ts"
+      ],
+      "depends_on": [
+        "8"
+      ],
+      "acceptance": [
+        "CI: node tests/stylist/findBuy.test.cjs tests missing fit/links and asserts only external URL opening, no purchase API."
+      ],
+      "status": "proposed"
+    }
+  ]
+}
