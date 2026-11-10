@@ -3,7 +3,7 @@
 Status: proposed; all code later in killbill2792/MVPStyli
 
 ## Current vision
-Read [exec.md — v1](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md) for the only current vision. This file is implementation design, not a second vision.
+Read [exec.md — v2](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md) for the only current vision. This file is implementation design, not a second vision.
 
 ## Architecture
 The app uses `App.js` route state and `components/BottomBar.js`. `shop` shows an inline grid; `chat` shows legacy `screens/ChatScreen.js`; `account` renders `screens/StyleVaultScreen.js`; `userprofile` renders `screens/UserProfileScreen.js`. Keep old `tryon`, `product`, `podshome`, `createpod`, `podlive`, `podguest`, and `podrecap` routes functional for existing entry points. **New Stylist flows use in-screen overlays/full-screen card expansion; the Live Pod can expand within Stylist without a separate primary screen.** Preserve Explore and StyleCraft. Spaces are out of scope. `screens/AccountScreen.js` is not the active account route.
@@ -14,7 +14,7 @@ Reuse, do not rebuild: `screens/ChatScreen.js`, `lib/productSearch.ts` and `api/
 
 ```mermaid
 flowchart TD
-  UI[Stylist hero, outfit panel, slide-up sheet] --> app[App route and existing context]
+  UI[Stylist hero, outfit panel, slide-up sheet and 4 chips] --> app[App route and existing context]
   app --> style[Style engine and profiles]
   app --> catalog[Inline Shop swipe card and existing search APIs]
   app --> pod[Existing Pods data and full-screen card]
@@ -25,60 +25,68 @@ flowchart TD
   worker --> push[Text-only Expo push - gated]
 ```
 
-## One-screen layout and timeline — owner-approved refinement 2026-11-10, 11:24 AM PT
-This **supersedes the 11:05 AM default-visible-history layout**. Same Stylist screen and same continuous chat; **History is not visible on the default outfit screen**. The owner's reference screenshot defines layout; exact measurements require the asset.
+## Final interaction model — owner-approved 2026-11-10, 12:13 PM PT
+This **supersedes earlier chip sets, standalone Mix & Match / Color Analysis / Style Advice workflows and any proposed new tables**. See [exec.md — v2](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md) for the only current vision.
 
-- **Default surface:** Large hero photo of the user in the **current look**, with a floating **Current Outfit** panel containing **real item thumbnails**, brand names, and an **× remove** control per item (replace text-only tags). Remove changes the current outfit selection, not the source closet, garments or history row; update the displayed selection safely. Show **bookmark** (reuse existing `saved_fits` / StyleVault saved-look path) and **share** (existing safe native share sheet only on tap; do not expose private image links). A slide-up/down **AI Stylist sheet** holds the latest short line and current interactive cards. At bottom show **More Looks, Mix & Match, Color Analysis, Style Advice** chips and a slim typing-only expanding chat bar. Elevate remains a conditional row **only when a look exists**, not a fifth permanent chip.
-- **One texting-style conversation:** One **continuous Stylist conversation per signed-in user**, across all days. **No ChatGPT-style new-chat picker/list** and no per-day conversation creation. The compact default Stylist sheet shows the latest exchange/cards; older messages are stored, **not rendered as a full history by default**. New short lines and cards append to the same thread, with no second chat history service.
-- **Three-dot menu: exactly two entries:** **History** and **Saved looks & Pods**, nothing else. Opening History presents an in-screen history view (not a new primary route): query that same Stylist conversation by **date/day and kind/card_type**, group messages under **day dividers**, allow scrolling up through **all previous days** and jumping to a selected past day/look/Pod. Selecting a saved look or historical card **restores its authorized outfit/photo to the hero**. Saved looks & Pods reuses existing `saved_fits`, `try_on_history` and `pods`; **no new table**.
-- **Historical cards stay tappable:** Look, Elevate, Pod ready, Live Pod, Shop, Tomorrow and Try-on (plus Closet three looks) remain interactive after past-day retrieval. Tap a card to **expand full screen as an overlay within Stylist**, not create a second navigation page. **Pod opens the existing live Pod experience full screen** (or a read-only recap when expired), using `subscribeToPodVotes`; **Try-on/Look taps restore or swap the hero photo**; Shop reopens its inline product row/full card within the sheet. Missing/deleted source rows show a safe unavailable state, not a fake object. Back collapses to the same Stylist screen and keeps the scroll position.
-- **Shop stays in chat:** An ask such as “show me a polka dot dress” produces an **inline Shop card** in the AI Stylist conversation (persist its ID-only reference). The card has a **swipeable row** of products with photo, brand, price, **Try On**, **Buy**, and **“See all N”** to expand more results **inside Stylist**. **No separate Shop page or mandatory catalog sheet**. Preserve catalog-first `lib/garmentUtils.js` and existing `lib/productSearch.ts` / `api/searchwebproducts/index.ts` search behavior and per-user caps. Display **no size** until interest.
-- **Fit only after interest:** Tapping an item thumbnail in **Current Outfit**, or saying/tapping **“I like this”**, **Try On**, or **Buy**, opens a small **“Fit for you”** card for that item. Use `lib/fitLogic.js` `recommendSizeAndFit` for a supported size + one fit note (else labeled saved profile size or “size not confirmed”); `lib/colorScoring.js` `computeColorScore` for skin-tone color verdict **great/good/ok/risky**; and existing `lib/styleSuitability.js` `evaluateSuitability` for **one factual face/body suitability line**. If the required profile/image/color data is missing, say **not enough data** rather than fabricate a score or label. Never calculate/show Fit Check for all results up front. A **“Why this works”** button on the hero opens the **full, supported face/skin/body summary for the current look**, without invented look-level scores.
-- **Storage, strictly no new history tables:** Reuse `chat_conversations` and `chat_messages` from `scripts/ADD_CHAT_HISTORY.sql`. Add compatible `chat_conversations.kind='shop'|'stylist'` (old chats keep `shop`), enforce **exactly one `kind='stylist'` conversation per user** via unique user+stylist constraint and transactional get-or-create; all Stylist days append to that one conversation. Maintain `chat_messages.type='user'|'ai'` for old ChatScreen. Add optional `card_type` and **ID-only** `payload` for `look,elevate,pod_ready,pod_live,shop,closet,tomorrow,tryon,pod_declined`; use `created_at` (+ ID tie-break) and indexed day/kind queries to render History. No duplicated Pods, votes, images, `try_on_history`, `user_events` or `user_style_profile` payloads. **No separate day, thread, card, saved-look, or History table**; this restriction concerns the one-screen chat/history design and does **not** revoke the separately approved private `closet_items`, `tomorrow_looks`, or `buy_intents` workflow tables.
-- **Security:** `scripts/ADD_CHAT_HISTORY.sql` contains temporary public `USING(true)` chat policies. Add a backward-compatible migration that removes those and enforces **owner-only RLS** on the existing two tables, without changing the original SQL or leaking legacy Shop chats; always filter conversation kind. The Stylist timeline is **append-only**, with durable per-look `pod_declined` events for No. No event on Cancel; never delete or rewrite history to reflect a card-state change.
+- **Base screen:** large hero with currently worn look; floating Current Outfit with *real* item thumbnails, brands and remove ×; bookmark/share and Why this works. AI Stylist sheet slides up/down and contains latest short messages, interactive cards and **exactly four chips: Today's look, Style my closet, Find & buy, Elevate**. Slim chat expands only during typing. Today's look retrieves the current authorized saved/scheduled look or prompts for closet setup; it does not force unapproved generation. Elevate chip stays visible but is disabled without a current look; Elevate row appears only when one exists.
+- **One continuous thread:** one `chat_conversations.kind='stylist'` row per user, plus existing `chat_messages` (no chat picker). Default keeps full history hidden. Three-dot menu has **only History and Saved looks & Pods**. History queries that same conversation by date and `card_type`, groups with day dividers and scrollback across days. Tapping an old Look/Shop/Pod/Tomorrow/Try-on card expands it full screen *within Stylist* and restores the authorized look to the hero. No new screens or Spaces.
+- **Inline cards:** Look, Elevate, Pod ready, Live Pod, Shop, Closet three looks, Tomorrow, Try-on and contextual pairing card. Shop card is a swipe row with photo, brand, price, Try On, Buy and **See all N** in the same sheet. Three-looks card has its own **More** button that reuses WF2 picker/compositor and PR #4 with all original gates. **No More Looks chip**.
+- **Style this, not a workflow/chip:** Any Current Outfit thumbnail, closet item or Shop item opens a three-action mini-menu **Style this / Fit for you / Buy** (unavailable action disabled when no valid item/link). Typing “what goes with my black jeans?” dispatches the same Style this intent. Read owned closet image references from current conversation/Storage first, fill remaining choices with `lib/garmentUtils.js` -> `/api/garments?active_only=true`; rank 2–3 realistic pairings against outfit and style profile. Return **one inline pairing card** with 2–3 suggestions and Try On only when hero look exists; Buy (verified link only) and Send to Pod (requires a selected current/generated look). No size/fit before interest.
+- **Chat color and advice:** “what colors suit me?” or style advice typed in chat uses existing `POST /api/analyze-skin-tone` with consent and `lib/colorAnalysis.ts` `saveColorProfile` for missing profile data, otherwise `getStyleProfile`, color profile and Fit Profile. Reply in the **same chat**. On a selected/interested item, the **Fit for you** card combines `lib/fitLogic.js` `recommendSizeAndFit` size and fit note (or labeled profile size/size not confirmed), `lib/colorScoring.js` `computeColorScore` skin-tone color swatches/verdict great/good/ok/risky and a supported `lib/styleSuitability.js` face/body line. A hero **Why this works** action displays the supported full look summary. Do not show Fit for you or invented scores before item interest.
+- **Only existing tables:** `chat_conversations` and `chat_messages` store all user-visible thread lines/cards, references and durable event markers (e.g. `pod_declined`, `buy_intent`, `tomorrow`) through additive `kind`, `card_type`, `payload` columns/checks/indexes. `chat_messages.type='user'|'ai'` stays backwards compatible. No new application tables; **no `closet_items`, `tomorrow_looks`, `buy_intents` or separate history/saved-look table**. For canonical objects use existing `pods`, `try_on_history`, `saved_fits`, `notifications`, `profiles`, `user_style_profile`, `user_events`. Store closet photos in **per-user protected paths in existing Supabase Storage**, referenced by storage object keys + minimal type/color metadata on user-owned `chat_messages` cards; **not** `garments`. For ephemeral web products, store only necessary validated source identifier/link and minimal display metadata on the Shop card, not a new product table.
+- **One-user invariant and safety:** enforce partial unique index for `kind='stylist'` on existing `chat_conversations.user_id`, transactional get-or-create, owner-only RLS for both chat tables and Storage objects. Remove permissive public policies in `scripts/ADD_CHAT_HISTORY.sql` via additive migration; do not edit old setup or let legacy `kind='shop'` chat leak. Order by `created_at,id`; past messages never rewritten/deleted for state changes. Prefer ID-only refs to canonical rows and minimal typed JSON payload for card-only data. Dedupe `(conversation_id,card_type,look_id/action_key/local_date)` using constraints/guarded operations on **existing** chat_messages; no new tables.
+- **Words in the UI:** never expose “workflow” or workflow numbers to users. Internal plan headings may keep numbers. Visible labels are the four chips, the three-item contextual menu, **More** on three-looks, Fit for you, Why this works, Try On, Buy, Send to Pod.
 
 ```mermaid
 flowchart TD
-  default[Stylist opens with hero current look] --> outfit[Floating Current Outfit thumbnails, brand, remove]
-  outfit --> sheet[Slide-up AI Stylist latest line and cards]
-  sheet --> input[Four bottom chips and slim chat bar]
-  default --> menu[Three-dot menu]
-  menu --> history[History: one conversation with day dividers]
-  menu --> saved[Saved looks and Pods from existing records]
-  history --> select[Tap past card or jump to day]
-  select --> restore[Restore authorized look on hero]
-  select --> full[Expand card full screen within Stylist]
-  sheet --> shop[Inline swipe Shop card and See all N]
-  outfit --> interest[Tap item or Like, Try On, Buy]
-  shop --> interest
-  interest --> fit[Fit for you: size, color, suitability]
-  default --> why[Why this works face skin body]
-  history --> db[Existing chat_conversations and chat_messages]
+  hero[Current-look hero and Current Outfit thumbnails] --> sheet[Slide-up AI Stylist sheet]
+  sheet --> chips[Exactly four chips: Today, Closet, Find and buy, Elevate]
+  sheet --> chat[One continuous chat per user]
+  hero --> item[Tap item thumbnail]
+  shop[Shop result item] --> item
+  closet[Closet photo item] --> item
+  item --> menu[Style this, Fit for you, Buy]
+  menu --> pair[2-3 pairings, closet before catalog]
+  pair --> card[One inline pairing card]
+  menu --> fit[Fit for you only after interest]
+  chat --> color[Color or advice questions answered in chat]
+  hero --> why[Why this works full look reasoning]
+  sheet --> more[More on three-looks card only]
+  hero --> dots[Three-dot menu]
+  dots --> history[History across days, same chat]
+  dots --> saved[Saved looks and Pods]
 ```
 
 ## Workflows
 All wait ranges are rough estimates, not measured SLAs. Costs are per use: provider rates are not verified; no paid/live use is authorized by this plan.
 
 ### 1. Stylist chat turn — Workflow 1
-**Approved by owner 2026-11-10, 10:18 AM PT.**
-- Trigger/screen: The outfit-first Stylist hero, floating Current Outfit panel and compact AI Stylist sheet are visible by default; **full History is not**. Typing in the slim bottom bar or tapping one of four chips adds a short line or card to **one existing conversation**; the sheet expands for interaction and the bar only expands while typing. Older days appear through three-dot **History**, not a list of new chats.
-- Calls and save: Read allowed profile/color/fit/style signals via lib/styleEngine.ts and existing profile state; route intents locally to advice, existing search or Pod, with a safe short reply. No new paid model by default. Append every authorized Stylist line/card to the **single** owner-scoped `chat_conversations(kind=stylist)` row and `chat_messages` using typed ID-only payloads; History reads that same conversation by date and card kind with day dividers. Keep legacy `kind=shop` history separate and do not duplicate canonical data.
-- Wait/visible state: Estimated 0.5–2 s for a local answer or 2–5 s if reading profile data; show a short thinking line and keep the image visible.
-- Failure: Missing profile or network -> generic advice with retry; do not invent scores.
-- Cost per use: Local rules: $0 marginal API; database requests billed under existing Supabase plan; optional model requires later approval.
+**Approved by owner 2026-11-10, 10:18 AM PT; final interaction update 12:13 PM PT.**
+- Trigger/screen: One slim chat bar in the slide-up AI Stylist sheet, plus exactly four chips: **Today's look, Style my closet, Find & buy, Elevate**. Older history hidden by default; each user has one continuous conversation. No “workflow” labels in the UI.
+- Calls: Route typed product questions to existing catalog/search, “what goes with my black jeans?” to **Style this** action, “what colors suit me?” to existing `POST /api/analyze-skin-tone` plus `saveColorProfile` if consented, and style questions to `getStyleProfile`, color and Fit Profile. Pod and image actions call only approved paths. No separate Mix & Match, Color Analysis or Style Advice chip/workflow.
+- Saved: Append short text and typed inline card references to one owner-scoped `chat_conversations(kind=stylist)`/`chat_messages`; existing Shop chat kind stays separate. For color analysis, save only through existing color-profile path. Use current card state and reference IDs, no new table.
+- Wait/screen: Estimated **0.5–2 s** for local advice, **2–5 s** for profile/search, **5–15 s** for optional existing image-based color analysis; show short thinking line, no long chat wall or new screen.
+- Failure: No profile/consent -> ask/setup or give clearly general advice; network/key unavailable -> retry without invented color/profile score. Do not show item Fit for you before interest.
+- Cost: Local rules no new model fee; existing Supabase use. Existing color analysis/search provider charges unverified; test mocks and go-live gate apply.
 
 ```mermaid
 flowchart TD
-  chat[Type or chip] --> intent[Classify intent locally]
-  intent --> signals[Read style and profile]
-  signals --> reply[Short Stylist reply]
-  reply --> action[Update image or offer action]
+  input[Four chips or typed chat] --> intent{What is requested?}
+  intent -->|Today| today[Find authorized current look]
+  intent -->|Closet| wf2[Existing WF2 generation]
+  intent -->|Find and buy| wf4[Existing shopping path]
+  intent -->|Elevate| wf5[Only with existing hero look]
+  intent -->|Style this text| pair[Contextual pairing action]
+  intent -->|Colors or advice| advice[Existing color and style APIs]
+  advice --> inline[Short chat answer and interest-gated Fit card]
+  pair --> inline
+  inline --> history[Append to one Stylist conversation]
 ```
 
 ### 2. Elevate / Try On — Workflow 5
 **Approved by owner 2026-11-10, 10:51 AM PT.**
 
-- **Trigger/screen:** The **Elevate Your Look** row appears **only after** a closet look, earlier try-on, or tomorrow's look is already the Stylist's main image. **Never show the row on an empty screen.** Tap **Try On** on a row item. The **on-screen look image is always `human_img`**; no “upload body photo” branch in this workflow (WF2 handles body-photo collection).
+- **Trigger/screen:** The **Elevate Your Look** row appears **only after** a closet look, earlier try-on, or tomorrow's look is already the Stylist's main image. **Never show the row on an empty screen.** The **Elevate** chip is always one of the four chips, but disabled when there is no current look; tap it to reveal the row. Tap **Try On** on a row item. The **on-screen look image is always `human_img`**; no “upload body photo” branch in this workflow (WF2 handles body-photo collection).
 - **Items/calls:** Only active garments from `lib/garmentUtils.js` -> `GET /api/garments?active_only=true` -> `garments`, each with an image and a category mappable to PR #4. Rank with the current look, style fingerprint and color season using `lib/styleEngine.ts`. **No SerpAPI** for Elevate. Keep the row short, with its exact count set by the owner's mockup/Thanmayi Figma (not guessed here).
 - **Fit on interest:** Row cards always show **photo, brand, price and Try On**, with **no size, color rating or face/body suitability** beforehand. Tapping a Current Outfit item also opens the same interest-gated Fit for you card. **Tapping Try On is interest**: then run existing Fit Check `lib/fitLogic.js` with available measurements and size chart, display its supported size + one fit note; otherwise show a saved profile size labeled **“your profile size”**, or **“size not confirmed”** with Fit Profile prompt (WF4). Never invent a size or size all items.
 - **Prepare inputs:** Require a signed-in owner, validate the on-screen human image and garment. PR #4 rejects external garment image URLs and has an **empty catalog allowlist**: first call `lib/upload.ts` **`uploadRemoteImage`** to copy the chosen remote garment image into the signed-in user's own Storage path, verifying ownership. Reuse the category map already in `App.js`: `upper|upper_body → upper_body`, `lower|lower_body → lower_body`, `dress|dresses → dresses`. If the category is unmappable, **do not call** the API.
@@ -115,25 +123,21 @@ flowchart TD
   saved -->|Yes| done[Show new look]
 ```
 
-### 3. Product search — inline Shop card
-**Search behavior pending owner review; inline Shop presentation approved by owner 2026-11-10, 11:24 AM PT.**
-- Trigger/screen: User asks “show me a polka dot dress” or another product search in the bottom chat; AI Stylist displays an **inline Shop card** in its slide-up conversation sheet, not a new page or separate catalog sheet.
-- Calls and save: For catalog inventory call `lib/garmentUtils.js` -> `GET /api/garments?active_only=true` -> `garments`/`garment_sizes`; if appropriate use existing `lib/productSearch.ts` -> `POST /api/searchwebproducts` -> SerpAPI only under WF4 search cap/go-live gate. Normalize the valid results. Append a `chat_messages.card_type=shop` ID-only reference in the one Stylist conversation, not a copied product catalog. Never merge legacy Shop chat history.
-- UI and wait: Estimated **1–3 s catalog**, **2–5 s web**; show a small loading placeholder **inside the sheet**. Results are a **horizontal swipe row** with photo, brand, price, Try On, Buy, and **“See all N”** to reveal remaining real results in-place (not a new Shop route). Show no size/fit before item interest; after Try On/Like/Buy, open **Fit for you** for just that item.
-- Failure: Search key missing/network down -> eligible local catalog results or a real empty state with Retry. Missing links/known out-of-stock disable Buy; never fabricate products, sizes or links.
-- Cost per use: Existing catalog fetch **$0 marginal search-provider fee**; SerpAPI cost only if enabled, **~$0.01–$0.02/search unverified**, capped per user; no live keys before go-live.
-
+### 3. Product search — inline Shop card (part of Workflow 1, not a new screen)
+**Inline presentation approved 2026-11-10, 11:24 AM PT; four-chip interaction final 12:13 PM PT.**
+- Trigger/screen: **Find & buy** chip or user text such as “show me a polka dot dress.” Show one inline Shop swipe row with photo, brand, price, Try On, Buy, **See all N**; no standalone Shop page.
+- Calls/saved: `lib/garmentUtils.js` / `GET /api/garments?active_only=true` first; if needed one capped `lib/productSearch.ts` -> `POST /api/searchwebproducts` fallback. Persist a `chat_messages.card_type=shop` card in the **same one conversation**, referencing catalog IDs or minimally necessary safe web link/display data in payload; no new tables.
+- Wait/failure/cost: Estimated 1–3 s catalog, 2–5 s web; retry/empty state if unavailable, no fake products. Catalog $0 marginal provider fee; SerpAPI $0.01–$0.02 per search **unverified** and live off until approval. Show no size until interest.
 ```mermaid
 flowchart TD
-  ask[User asks Stylist for products] --> source{Catalog results?}
-  source -->|Yes| garments[Existing garments API]
-  source -->|No| web[Existing capped web search API]
-  garments --> inline[Inline swipe Shop card]
-  web --> inline
-  inline --> see[See all N inside Stylist]
-  inline --> action[Try On, Like or Buy interest]
-  action --> fit[Fit for you card for selected item]
-  inline --> history[Append shop ID reference to one chat]
+  ask[Find and buy chip or user question] --> catalog[Existing garments catalog]
+  catalog --> found{Relevant results?}
+  found -->|No| web[One capped existing web search]
+  found -->|Yes| card[Inline Shop swipe card]
+  web --> card
+  card --> all[See all N on same Stylist screen]
+  card --> pick[Tap item: Style this, Fit for you, Buy]
+  card --> oneChat[Append card to one chat]
 ```
 
 ### 4. Proactive Pod suggestion — Workflow 6
@@ -176,12 +180,12 @@ flowchart TD
 ### 5. Style my closet — Workflow 2: closet + three looks
 **Approved by owner 2026-11-10, 10:22 AM PT.**
 
-- Trigger/screen: On Stylist, tap **Style my closet**. Enforce upload of **3–4 clothing photos** (not fewer or more). If `profiles.body_image_url` is missing, ask for a full-body photo first. Generation **starts immediately after upload**; no More Looks tap. More Looks retains its separate meaning.
+- Trigger/screen: On Stylist, tap **Style my closet** chip. Enforce upload of **3–4 clothing photos** (not fewer or more). If `profiles.body_image_url` is missing, ask for a full-body photo first. Generation **starts immediately after upload**; **More is a button on the three-looks result card** to generate another set through this same server picker, compositor and PR #4 gated path. No More Looks chip.
 - Calls: On the existing upload path, store user-owned closet photos; read `profiles`, style fingerprint from `lib/styleEngine.ts`, color season, and manual Fit Profile. A **server-side text LLM: OpenAI GPT-4.1 mini, called only by a gated Vercel endpoint** `api/stylist-looks/index.ts` (proposed, not yet installed or approved for live/paid use), reads the photos and those signals and plans three outfits: **Closet** uses only uploaded items; **Elevated** uses a closet base plus 1–2 pieces from `GET /api/garments`; **Makeover** uses entirely new pieces in a style not seen in the user's recorded fingerprint. If the fingerprint cannot show a genuinely new style, mark the result as a suggestion, not a verified first.
 - During generation: Ask one question, e.g. “Where are you wearing this — class, date, party?” Save any answer to the user's style profile and use it to shape the looks if it arrives before outfit planning completes; if the user skips or answers later, do not pause generation (use the next run for a late answer). Start the planning request immediately, with a short opportunity for the answer; do not wait for an answer.
 - Image calls: The image path in PR #4 accepts **one garment image**. Add a **separate server-side composition step** `api/_lib/stylistOutfitComposite.ts` to combine each outfit's pieces into one garment image; do not edit PR #4's files. Submit the three composites to **PR #4's gated Nano Banana try-on path in parallel**. Never call the image model directly from new code.
-- Saved: New **private `closet_items`** table (`user_id`, private per-user storage `image_path`, `type`, `color`, `created_at`) with Supabase RLS and per-user storage rules; **never mix with `garments`**. Three resulting looks go into `try_on_history` by PR #4's **server-only writes**. Save the optional answer to the user's style profile under its ownership rules.
-- Wait/screen: **Estimated ~20–30 s total** for three parallel image generations, plus upload/planning/composition time; **rough, unmeasured estimate**, not an SLA. Ask the style question while images load. Show **three swipe cards under the main photo**; tapping one promotes it to the main image. Each card has **Send to Pod** with **Global suggested**, using existing Pod creation after confirmation.
+- Saved: **No `closet_items` table**. Keep uploads as per-user protected image objects in existing Supabase Storage and append one owned `chat_messages.card_type=closet` card with storage object keys, type/color and created_at in its minimal payload. The owning one Stylist conversation and Storage RLS scope them to the user; **never mix with `garments`**. Three resulting looks go into `try_on_history` by PR #4's **server-only writes**. Save the optional answer to the user's style profile under its ownership rules.
+- Wait/screen: **Estimated ~20–30 s total** for three parallel image generations, plus upload/planning/composition time; **rough, unmeasured estimate**, not an SLA. Ask the style question while images load. Show **three swipe cards under the main photo**; tapping one promotes it to the main image. The three-looks card has **More** to request a new set through the same WF2 picker/PR4 path; each look has **Send to Pod** with **Global suggested**, using existing Pod creation after confirmation.
 - Failure: If one look fails, show the other two; put **Retry** on the failed card only. If missing full-body photo, fewer/more than 3–4 images, missing consent, or TEST gate disabled, explain the issue without submitting an image. Preserve successful looks.
 - Cost per run: **1 text LLM call + 3 image generations**, plus composition, storage and API traffic. Model/image charges are **estimated, not priced or authorized**; use mocks until the relevant service gate is approved. Keep `STYLIT_TRYON_TEST_ENABLED` required for TEST; no production/live use until owner go-live approval.
 
@@ -214,10 +218,10 @@ flowchart TD
 - Trigger/screen: An **hourly Supabase pg_cron** job finds opted-in users whose IANA `profiles.timezone` local hour is **21:00**, who were active in the **last 7 days**, and who have not had tomorrow's local date processed. It enqueues **one independent job per user** for the existing Vercel backend. Never send one long batch to Vercel (**30 s function limit**). At sign-in, the app saves the device's IANA time zone and city/coarse location into new `profiles.timezone` and `profiles.city` fields; refresh on later sign-ins. No Dave or external bots. Only run scheduling after owner go-live approval.
 - Calls/inputs: Supabase `pg_cron` -> per-user authenticated/gated `api/stylist-tomorrow/index.ts` worker. Read user-owned `closet_items`, style fingerprint via `lib/styleEngine.ts`, color season, manual Fit Profile and full-body image from `profiles`. Weather: **Open-Meteo** free city forecast **for testing only**; its commercial plan or another provider is a separate owner go-live decision. Event: (a) what the user told the Stylist about tomorrow (saved in their style profile); (b) if opted in, titles and times of next-day calendar events from **expo-calendar on device**, read at the **last app open** and synced privately to the server. No backend calendar scraping. Calendar data may be stale; label or omit it when so.
 - Pick/image: Reuse Workflow 2's **server-side OpenAI GPT-4.1 mini** outfit picker to choose **one look** from closet, fingerprint, color and fit. Use Workflow 2's server composition step to make **one multi-piece garment image**, then call **only PR #4's gated Nano Banana try-on path**. Retry the generation **once** if it fails, then skip that night. Never edit PR #4 files or bypass its server-only history writes.
-- Saved: New private `tomorrow_looks` table: `user_id`, `local_date` (**unique with user_id**), `look_items`, private `image_path`, `weather`, `event`, `status`; RLS/user ownership and idempotent upsert prevent duplicate nightly jobs. Keep a try-on entry in `try_on_history` **server-only through PR #4**, and an in-app notifications row. Save Expo push tokens **per device** in a private `device_push_tokens` table (or a per-device profile-linked equivalent); enforce user ownership, token rotation and opt-out.
+- Saved: **No `tomorrow_looks` or device-token table**: append an owner-scoped `chat_messages.card_type=tomorrow` message in the one Stylist conversation with `local_date`, look references, minimal weather/event/status metadata and dedupe key. Enforce uniqueness of `(conversation_id, local_date, card_type=tomorrow)` with a partial expression index on **existing chat_messages** and race-safe claim; keep successful owned image in existing `try_on_history` **server-only via PR #4**, and use existing `notifications` for in-app notices. Save per-device Expo push-token records as owned JSONB in existing `profiles`, with token rotation and opt-out.
 - Wait/screen: Scheduled backend work, **not a user wait**. Rough estimate **20–30 s for one full try-on request**, excluding queue/weather/planning, and subject to Vercel's **30 s per-request limit**; split work into short independent jobs and persist status instead of timing out. Expo push is **text only**: **“Tomorrow's look is ready.”** An image inside the iOS notification requires a Notification Service Extension and a separate go-live decision.
 - Open: Tapping the push or in-app row opens the **Stylist** screen with tomorrow's image as the main photo, one concise reason (e.g. “58° and an interview — polished but warm”), and **Wear it / Show me more / Send to Pod** buttons. Suggest **Global** for Pod, but create it only on confirmation.
-- Failure: No closet -> push invites user to **add 3 photos**; no full-body photo -> ask for one. If push permission is denied, keep the look in-app without a push. If weather/calendar are unavailable or stale, use only available authorized signals and mark the reason accordingly. If generation fails, retry **once**, then mark skipped for that night; never send a false ready notice. Deduplicate retries and isolate jobs so one user never blocks another.
+- Failure: No closet references in chat -> push invites user to **add 3 photos**; no full-body photo -> ask for one. If push permission is denied, keep the look in-app without a push. If weather/calendar are unavailable or stale, use only available authorized signals and mark the reason accordingly. If generation fails, retry **once**, then mark skipped for that night; never send a false ready notice. Deduplicate retries and isolate jobs so one user never blocks another.
 - Cost per eligible active user/night: **~$0.04–$0.06, rough estimate only**, for one text-LLM pick, one image generation (up to one retry), weather, Supabase, Vercel and push usage. Cost and provider rights need validation. Schedule **only users active within 7 days**. Run with mocks and no external sends until the owner's final go-live approval. Gate image use behind `STYLIT_TRYON_TEST_ENABLED` in TEST.
 
 ```mermaid
@@ -236,7 +240,7 @@ flowchart TD
   success -->|No| once[Retry once]
   once --> retry{Retry succeeded?}
   retry -->|No| skip[Mark night skipped]
-  retry -->|Yes| save[Idempotent tomorrow_looks + history]
+  retry -->|Yes| save[Idempotent chat tomorrow card + existing history]
   success -->|Yes| save
   save --> notice[Save in-app notification]
   notice --> permission{Expo push allowed?}
@@ -255,7 +259,7 @@ flowchart TD
 - **Interest / Fit Check:** Run sizing **only** after the user taps **Try On**, says/taps **“I like this”**, or says/taps **Buy** for that item. If profile measurements **and a usable size chart** exist, call `lib/fitLogic.js` **`recommendSizeAndFit`** with `garment_sizes` (catalog) or `lib/brandSizeCharts.js` / `brand_size_charts` (web item) and display **the recommended size plus one fit note**. On `INSUFFICIENT_DATA`, absent measurements or unavailable chart, show `profiles.top_size` or `profiles.bottom_size` as **“your profile size”** if appropriate; otherwise show **“size not confirmed”** and a short prompt to complete Fit Profile. Never guess sizes or block on live OCR. Show a small **Fit for you** card **only for the interested item**: that supported size plus one fit note, `lib/colorScoring.js` `computeColorScore` skin-tone verdict great/good/ok/risky when enough data exists, and one supported face/body suitability line from `lib/styleSuitability.js` `evaluateSuitability`. A tap on a Current Outfit item also counts as interest. On insufficient data say so rather than invent a score. **Why this works** on the hero opens the full verified face/skin/body summary. No other cards gain fit details.
 - **Try On:** Use **only MVPStyli PR #4** try-on path, and only behind `STYLIT_TRYON_TEST_ENABLED` until the owner's go-live OK. On failure keep the original card/image and offer **Retry Try On** only.
 - **Buy V1:** After the interest sizing step, use `Linking.openURL` on a validated `product_link` (catalog) or `productUrl` (web). No payment charge, no in-app checkout. Keep the shown size in Stylit with a reminder like **“pick Size M on the store page”** when known; **do not claim** the merchant preselected it. No affiliate link rewriting in v1; future affiliate tracking requires a separate owner go-live approval.
-- **Saved:** Create a new **private `buy_intents`** table with `user_id`, `title`, `brand`, `price`, `image`, `store_url`, `source` (`garments` or `web`), `size_shown`, `size_source` (`fitcheck`, `profile`, `unconfirmed`), `opened_at`, and user-scoped RLS. Write **once** when a valid Buy link is opened; deduplicate repeated taps for the same intent. Optionally write a `user_events` row. **Do not use the `products` table** or create payment/order tables.
+- **Saved:** Create a **No new `buy_intents` table**. Append an owner-scoped `chat_messages.card_type=buy_intent` event within the single conversation (existing columns + typed JSON payload) with minimal title/brand/price/image reference, verified `store_url`, source `garments|web`, size shown/source and opened_at. Add a dedupe key and partial unique index on **existing chat_messages** to prevent repeated writes. Optional existing `user_events` row is allowed; never use `products` or add order/payment tables.
 - **Wait / visible state:** Rough estimates, not measured: **1–3 s catalog** or **2–5 s with one web search**; keep outfit and card visible with a small loading indicator. Fit Check uses existing local rules when data is available, with no mandatory OCR wait.
 - **Failure:** No size data or `INSUFFICIENT_DATA` -> profile size or **“size not confirmed”**; known out-of-stock -> hide Buy and offer another pick; broken or missing link -> **unavailable** with no guessed URL; search down/no key -> valid catalog items or an empty state and **Retry**, never fake products; Try On failure -> preserve card, Retry Try On only. Do not insert buy intent for an invalid link.
 - **Cost per use:** Catalog lookup **$0 marginal search-provider cost** (existing backend use); SerpAPI roughly **$0.01–$0.02/search**, **unverified estimate**. Only one fallback search per request under a per-user cap; test with mocked search and keep live search and secrets disabled until owner go-live approval. V1 Buy itself never charges the user.
@@ -283,89 +287,53 @@ flowchart TD
   tryon --> tryonresult[Image or Retry Try On]
   action -->|Buy| available{Valid link and available?}
   available -->|No| unavailable[Unavailable; offer other pick]
-  available -->|Yes| intent[Dedup private buy_intents row]
+  available -->|Yes| intent[Dedup chat buy_intent event]
   intent --> merchant[Open merchant link; size reminder in Stylit]
 ```
 
-### 8. Mix & Match chip
-**Pending owner review.**
-- Trigger/screen: Tap Mix & Match on Stylist; show outfit combinations beneath the main image.
-- Calls: Read permitted wardrobe/garments using `lib/garmentUtils.js` and `GET /api/garments`; rank combinations with `lib/styleEngine.ts`. Optional Try On uses only PR #4's gated path.
-- Saved: Chosen items stay in local screen state; a generated image is saved server-only to owned `try_on_history`, not `garments`.
-- Wait/visible state: Estimated 1–3 s for picks or 10–20 s for Try On; show cards while keeping the main image, then a progress message.
-- Failure: No matching items -> offer manual choices; try-on failure -> retain old image with Retry.
-- Cost per use: No new model charge for matching; one image-generation charge only if Try On runs (amount unverified).
+## Contextual Style this action — NOT a chip or workflow
+- Trigger: tap a Current Outfit thumbnail, closet photo item or inline Shop item; mini-menu has **exactly Style this / Fit for you / Buy**. Typing “what goes with my black jeans?” activates **Style this** directly.
+- Calls: read **owned closet Storage references recorded in existing chat_messages first**; use `lib/garmentUtils.js` / `GET /api/garments?active_only=true` to fill gaps and reuse style fingerprint/color season for sensible combinations. Return **2–3 pairings in one inline card**; **Try On** only when a hero look exists and only through PR #4 with the TEST gate. **Buy** uses verified merchant link; **Send to Pod** needs a selected/real look and calls existing confirmed Pod flow.
+- Saved: append one `chat_messages` pairing-card row with reference IDs/minimal item metadata in the **same conversation**. No new pairing/item table or copied canonical data.
+- Wait: estimated **1–3 s** catalog + existing profile lookup; optional Try On ~10–20 s (estimate).
+- Failure: no closet or catalog matches -> honest empty/Retry; no hero look -> disable Try On/Send to Pod; no URL -> Buy unavailable; incomplete fit -> Fit for you says size not confirmed. No fake pairing or size.
+- Cost: local matching $0 new model fee; catalog backend ordinary use; optional TEST image generation existing fee (~$0.03–$0.04 estimate). No additional API provider.
 
 ```mermaid
 flowchart TD
-  chip[Mix and Match chip] --> read[Read owned wardrobe and garments]
-  read --> rank[Rank combinations]
-  rank --> select[User picks combination]
-  select --> choose{Try On?}
-  choose -->|No| cards[Show selected items]
-  choose -->|Yes| tryon[PR4 gated try-on]
-  tryon --> image[Show new saved image]
-```
-
-### 9. Color Analysis chip
-**Pending owner review.**
-- Trigger/screen: Tap Color Analysis; show an inline palette panel on Stylist.
-- Calls: Read `profiles` color season via `lib/colorAnalysis.ts`. If absent, offer the existing `api/analyze-skin-tone/index.ts` face-analysis flow only with consent.
-- Saved: A read saves nothing; existing profile color fields update only through the existing analysis path.
-- Wait/visible state: Estimated 0.5–2 s for saved colors, 5–15 s if analysis requested; show palette or a progress state while outfit stays visible.
-- Failure: Missing face image, permission or API -> show unknown season and existing profile setup option.
-- Cost per use: Normal profile read; optional existing analysis may have unverified API charges.
-
-```mermaid
-flowchart TD
-  chip[Color Analysis chip] --> exists{Season saved?}
-  exists -->|Yes| show[Show season palette]
-  exists -->|No| ask{Face analysis consent?}
-  ask -->|No| setup[Offer profile setup]
-  ask -->|Yes| analyse[Existing face analysis API]
-  analyse --> profile[Existing profile fields]
-  profile --> show
-```
-
-### 10. Style Advice chip
-**Pending owner review.**
-- Trigger/screen: Tap Style Advice; open a short panel on Stylist with current outfit still in view.
-- Calls: Read `lib/styleEngine.ts` fingerprint and `profiles` color/Fit Profile; apply existing `lib/fitLogic.js` rules locally. A later Try On tap must reuse PR #4.
-- Saved: Nothing by default; only explicitly provided preference/answer is written to the user's style profile with ownership checks.
-- Wait/visible state: Estimated 0.5–2 s for local advice or 2–5 s when loading profile; show one short thinking message.
-- Failure: Missing profile -> label it general advice; fetch error -> offer retry, never fabricate a score.
-- Cost per use: Local rules have no model-call charge; regular Supabase usage only.
-
-```mermaid
-flowchart TD
-  chip[Style Advice chip] --> signals[Read allowed style and fit signals]
-  signals --> advice[Apply existing local rules]
-  advice --> message[Show concise advice panel]
-  message --> action{User asks for Try On?}
-  action -->|No| done[Keep outfit]
-  action -->|Yes| tryon[PR4 gated try-on]
+  item[Tap outfit closet or Shop item] --> menu[Style this, Fit for you, Buy]
+  text[Typed what goes with my jeans] --> style[Style this]
+  menu -->|Style this| style
+  style --> closet[Check owned closet refs first]
+  closet --> catalog[Fill gaps from active garment catalog]
+  catalog --> pair[One inline card with 2-3 pairings]
+  pair --> iflook{Current look exists?}
+  iflook -->|Yes| tryon[PR4 gated Try On and Send to Pod]
+  iflook -->|No| inactive[Try On and Send to Pod disabled]
+  menu -->|Fit for you| fit[Interest-gated size color suitability]
+  menu -->|Buy| buy[Verified merchant link only]
 ```
 
 ## Task and PR merge order
 0a. Add a short rules-only AGENTS.md to MVPStyli linking to the canonical vision.
 0b. Install required PR-body vision-version CI check before implementation PRs.
 1. Map Shop, garments, navigation and PR #4 collision paths.
-2. Build the **outfit-first** Stylist shell: hero, floating Current Outfit real thumbnails, bookmark/share, slide-up AI Stylist sheet, hidden-by-default History menu and four bottom chips/chat.
+2. Build the outfit-first Stylist shell with exactly **Today's look / Style my closet / Find & buy / Elevate** chips, hero thumbnails, compact AI Stylist sheet and hidden-by-default one-conversation History.
 3. Apply verified owner mockup and Thanmayi theme/profile/wardrobe tokens (only after design access).
-4. Wire chat intent, **one private per-user continuous Stylist conversation** (kind/card_type/ID payload migration and owner-only RLS), History by day/kind behind menu, and **inline swipe Shop card with See all N**.
+4. Wire one continuous owner-scoped chat, typed card/event payloads, day/kind History and inline Shop with See all N; contextual Style this pairings and chat-only color/advice (no new workflows/tables).
 6. Wire inline Pod ready/edit/live/recap and existing votes/shares, **independent of PR #4**.
 5. Add Elevate only after an on-screen look; catalog-only ranked items, interest-gated fit, user-owned garment copy, PR #4 synchronous receipt, server history and per-user cap.
-7. Style my closet: enforce 3–4 photos, optional body photo, gated GPT-4.1 mini planner, three composed images via parallel PR #4 try-ons, private closet_items with RLS, optional profile question, swipe cards and Send to Pod.
-8. Add gated hourly Supabase pg_cron eligibility, per-user Vercel jobs, city/time zone, device calendar sync, Open-Meteo TEST weather, one WF2-composed try-on and text-only Expo push; keep mocked/dark until go-live.
-9. Offer one-per-look “I found this” and Buy links, inline swipe Shop card, interest-only Fit for you (size, color and body/face) plus Why this works hero, and deduplicated buy_intents; no checkout.
+7. Style my closet: 3–4 protected Storage photos referenced in chat, optional full-body/photo question, GPT-4.1 mini three-look planner, PR #4 composites, swipe card with **More** button and Send to Pod; no new closet table.
+8. Mock hourly pg_cron/Vercel one-user-at-a-time tomorrow look; reuse profiles and one chat message per local date, PR #4 history and existing notifications; keep dark until go-live.
+9. Implement Find & buy inline Shop card, interest-only Fit for you, verified Buy links and deduplicated `chat_messages` buy_intent event; no new tables or checkout.
 
 ## Notes
-The **11:24 AM PT one-screen design update supersedes the 11:05 AM default-visible history**: the default is the hero/Current Outfit/AI Stylist sheet, with full history accessible only via the three-dot menu. Tap past cards for full-screen in-screen expansion and restore the hero as specified; old standalone routes remain for compatibility. History stays in **one per-user Stylist conversation** using only canonical record IDs and owner-only RLS; no new chat/history tables. Previously approved closet_items, tomorrow_looks and buy_intents tables are separate feature storage and remain in scope.
+The **12:13 PM PT final four-chip interaction model supersedes previous chip sets and the three standalone chip workflows**; the 11:24 AM outfit-first screen remains the base: the default is the hero/Current Outfit/AI Stylist sheet, with full history accessible only via the three-dot menu. Tap past cards for full-screen in-screen expansion and restore the hero as specified; old standalone routes remain for compatibility. History stays in **one per-user Stylist conversation** using only canonical record IDs and owner-only RLS; no new chat/history tables. The final owner instruction prohibits **all new application tables**; prior closet_items, tomorrow_looks and buy_intents table proposals are superseded. Reuse existing Storage + chat_messages + profiles + try_on_history + pods/notifications.
 
-Workflows 1, 2, 3, 4, 5 and 6 **and the one-screen design** have owner approval dated 2026-11-10. All remaining feature workflows are pending owner review; these workflow approvals do not authorize live/paid use or merge this studio PR.
+Workflows 1–6 and the **final 12:13 PM PT interaction model** have owner approval dated 2026-11-10. The old Mix & Match, Color Analysis and Style Advice chip workflows are **retired**, not pending. Any other unreviewed implementation details remain subject to owner review; these workflow approvals do not authorize live/paid use or merge this studio PR.
 
 Task 2 must not write `App.js` until MVPStyli PR #4 is merged; if PR #4 remains open, use an isolated implementation that does not modify any PR #4 changed files. Task 6 follows Task 4, **not Task 5**, and has no direct or merge-order dependency on PR #4; use a mocked/existing look and preserve all current Pod services. Task 5 reads but never edits `App.js` or any PR #4 file and requires both PR #4 ownership/history SQL migrations applied. Tasks 7 and 8 require PR #4 merged; task 8 additionally requires PR #4's history SQL applied and task 7's private closet_items and composition proven. Both remain gated by `STYLIT_TRYON_TEST_ENABLED` until final go-live approval. Task 9's optional Try On also requires PR #4 merged and that TEST gate; live SerpAPI and credentials stay off until go-live.
 
-Every coding PR body must contain exactly `Vision version: v1` until the current version changes. CI must read the **current** exec.md on the studio default branch and fail missing, stale or unrecognized versions; never use archive/. When the owner changes the vision, copy the previous full exec.md text into dated archive file marked SUPERSEDED, update current exec.md with a new version/date, and adjust plans/checks. Coding chats must never read archive/.
+Every coding PR body must contain exactly `Vision version: v2` until the current version changes. CI must read the **current** exec.md on the studio default branch and fail missing, stale or unrecognized versions; never use archive/. When the owner changes the vision, copy the previous full exec.md text into dated archive file marked SUPERSEDED, update current exec.md with a new version/date, and adjust plans/checks. Coding chats must never read archive/.
 
 Each task is one PR in MVPStyli. Every task defines read-only `uses` and writable `edits`. Follow its AGENTS.md merge rules; wait until a parent is proven on default branch; rebase later tasks in order and fix clashes. Never edit PR #4 files. Since PR #4 changes `App.js` and `screens/StyleVaultScreen.js`, any task that needs them waits for its merge and bases on top; do not race it. Never add secrets. Merging this planning PR is feature-start approval, **not** production/paid approval.

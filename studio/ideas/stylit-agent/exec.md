@@ -1,34 +1,35 @@
 # Exec: Stylit Agent
-Vision version: v1, date: 2026-11-10
+Vision version: v2, date: 2026-11-10
 
-Status: proposed; owner starts work by merging this PR.
+Status: proposed. Only merging Studio PR #2 authorizes feature start; no live/paid services or app release without separate owner go-live approval.
 
 ## Vision
-Stylit is an AI fashion agent. For Gen Z, style is identity: it shows who they could be, not just clothes, and acts before they ask.
+Stylit is one proactive, image-first AI fashion agent for Gen Z. **The single Stylist screen** replaces Shop; there are no new primary screens or Spaces. The hero shows the user wearing the current look. The floating **Current Outfit** panel has real item thumbnails, brand and remove controls; the hero has bookmark, share and “Why this works.” A slide-up/down **AI Stylist** sheet shows the latest short exchange and tappable inline cards; a slim chat bar grows only while typing.
 
-The ONE screen is **Stylist (Agent)**, replacing Shop. The hero always keeps the user's **current-look photo at the top with small item tags**. Under it, one **scrollable, append-only history** has short Stylist lines and inline cards, oldest first and newest at bottom: Look, Pod ready, Live Pod (timer and live yes/maybe/no votes), Shop, Tomorrow's look, Closet three looks, and Try-on result. Users see, talk and act on this screen, with no separate create-Pod, Pod-live, or results page in the new flow. At the bottom are **Elevate, Mix & Match, Color, Style advice** chips and a **slim chat bar that expands only while typing**. Keep the outfit photo visible and update it for look changes; do not replace the visual experience with long AI text. Follow the owner's mockup/Figma for precise spacing. **Spaces are out of scope for now.**
+**Exactly four chips**, all on the AI Stylist sheet: **Today's look, Style my closet, Find & buy, Elevate.** No Mix & Match, More Looks, Color Analysis or Style Advice chips. Elevate suggestions appear only when a real look is on screen. There are **no separate chip workflows** for styling combinations, colors or advice.
 
-**Elevate Your Look appears only once an outfit or try-on image is already visible** (closet, earlier try-on, or tomorrow's look), never on an empty screen. Its short row uses active garment-catalog items with photo, brand, price and **Try On** but no size before the tap; tapping counts as interest and reveals existing Fit Check size, labeled profile size, or “size not confirmed.” It uses the on-screen look as the person image, a user-owned copy of the garment image and **only** the gated PR #4 Nano Banana route. Body-photo collection stays in the closet workflow, not Elevate.
+**“Style this” is a contextual action, not a chip or workflow.** Tap any Current Outfit thumbnail, closet item or Shop product and choose **Style this / Fit for you / Buy**. Asking “what goes with my black jeans?” in chat runs the same pairing action: one inline card with **2–3 pairings**, using closet items first and catalog items only to fill gaps, with Try On **only when a current look is on screen**, Buy and Send to Pod. No size until the user expresses interest.
 
-The Stylist says “tap here to see products” and opens a same-screen sheet of about ten items (image, brand, price, Try On). Once a look exists, it may offer a quick vote **once per look**: **“I like this. Want a quick vote? I'd go Global.”** An inline Pod-ready card is filled in for them: current photo, suggested title, Global, 15 minutes, Edit and Go live. Editing happens on the card; **only Go live creates a Pod**, which becomes a Live Pod card with timer and live votes in the same history. “No” means never offer again for that look. Say **“this matches your style” only when the look's tags, colors, or category actually overlap the stored style profile**; never invent a look-level score.
+Questions such as “what colors suit me?” or requests for style advice are answered in the **same chat** using existing color analysis, style fingerprint and Fit Profile. For an interested item, a **Fit for you** card gives supported size, color swatches/skin-tone verdict and one honest face/body suitability line. Never invent a size or a look-level score. **“Why this works”** gives the supported full look explanation.
 
-After 3–4 closet photos, show three try-ons: closet-based, elevated and complete makeover. Ask a style question during generation and use answers to personalize future advice. Each look has Send to Pod.
+**One continuous chat per user for all days**, backed by existing `chat_conversations` / `chat_messages`. The full timeline is **not shown by default**; the three-dot menu contains only **History** and **Saved looks & Pods**. History scrolls across days with dividers and tappable cards, restores chosen looks to the hero and expands cards full-screen *within the Stylist screen*. Shop searches appear as inline swipe cards (photo, brand, price, Try On, Buy, **See all N**), not a new Shop page.
 
-With consent, the app's own nightly Vercel/Supabase backend makes tomorrow's look from closet, calendar event and weather and sends an Expo image push. No external bot.
+**Style my closet** requires 3–4 clothing photos and a full-body profile image; generation starts immediately. The server planner picks three looks (closet, elevated, makeover) and routes composite garment images through the PR #4 gated Nano Banana try-on only. A style question during generation is optional. Each look is selectable and can be sent to Pod; **More** appears **on the three-looks card** to request another set through the same WF2 picker and PR #4 route, never as a chip.
 
-Find-and-buy is triggered by “I found this” only after a shoppable look appears (Elevate Try On, an Elevated or Makeover closet look, or tomorrow's look), once per look, never at app open. The user can also ask to find or buy an item. Photo, brand and price always show with **no size** on look and catalog cards. When the user taps Try On or Buy, or says “I like this,” reveal a supported Fit Check size and a fit note; otherwise use a clearly labeled saved profile size or say “size not confirmed.” The button reads **Buy** and opens the store link; the user selects their own size on the store page. V1 has no checkout, payments or affiliate links. Live searches, paid APIs and affiliate links require separate owner go-live approval.
+The Stylist can offer **“I like this. Want a quick vote? I'd go Global.”** once per real look. An inline Pod-ready card pre-fills current image, title, Global, 15 minutes; Edit occurs inline and **only Go live** creates a real Pod. Live votes, invites, guest links and recaps reuse existing Pods. A No suppresses future offers for that look; no invented style score.
+
+With opt-in, the app backend schedules tomorrow's look for eligible recently active users at 9 PM local time via Supabase hourly jobs and short per-user Vercel work, using closet, approved calendar event and test-only weather; the ready look appears in the hero and can notify by text-only Expo push. No external bot. The agent also proactively says **“I found this”** once after a shoppable look or responds to shopping requests; merchant Buy opens a verified store URL, not checkout.
+
+**No new application database tables.** All Stylist interactions, cards and event/dedupe metadata go in the **one existing chat conversation** and its messages (additive column/index/RLS changes are allowed). Use existing `profiles`, `user_style_profile`, `try_on_history`, `saved_fits`, `pods`, `notifications`, `user_events` and per-user protected Storage paths as appropriate. Never create `closet_items`, `tomorrow_looks`, `buy_intents` or a separate History table. No code outside MVPStyli; this Studio PR is plans only.
 
 ## Why this matters
-Pods are the core USP: friends, style twins and global voters help validate each look. Reuse current color-season analysis, Fit Profile, rule-based Fit Check, style fingerprint, StyleVault, garments API and SerpAPI search. Never rebuild these.
-
-## Success looks like
-One visual interaction and proactive outfit advice while existing try-on, Pods, wardrobe, profiles and Fit Check continue working. All implementation goes to killbill2792/MVPStyli, never this studio repo.
+Pods are the core shared validation. Reuse color season, Fit Profile, rule-based Fit Check, style fingerprint/twins, StyleVault, owned garment catalog, SerpAPI search and current try-on. No separate bots, shopping APIs or model clients.
 
 ## Out of scope
-Spaces, a second primary screen, separate pages for new Stylist cards or Pod setup/live results, separate bots, new image-model integration, rebuilding existing intelligence, live checkout, and unapproved production/App Store/paid API/secret changes.
+Spaces, extra primary screens, separate chat threads or pages, independent pairing/color/advice workflows, new database tables, autonomous checkout, paid/live APIs, app-store deployment, push activation, secrets and affiliate links without owner go-live approval.
 
 ## Open questions
-The owner's mockup and Thanmayi's Nov 4 Figma files (Trello tz4sewiZ) were not accessible here. Obtain them; do not invent visuals. Calendar, location and push permissions must be designed before nightly enablement.
+Owner reference screenshot and Thanmayi Figma from Trello tz4sewiZ must be obtained for precise visual sign-off. TEST identity pins, PR #4 merge plus migrations, provider rates, permissions, time zone and production eligibility must be checked before enabling services.
 
 ## Change rule
-This is the ONLY current vision. Any change requires a new dated vision version; move the prior full text to `archive/` with `SUPERSEDED` at the top. Coding agents never read `archive/`.
+This is the ONLY current vision. Prior v1 is SUPERSEDED in `archive/`; coding chats **never read `archive/`**. Any future owner-approved vision change receives a new version/date and archives the previous complete text.

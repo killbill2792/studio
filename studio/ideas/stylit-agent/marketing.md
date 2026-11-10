@@ -3,7 +3,7 @@
 Status: waiting until the feature is merged and proven
 
 ## Current vision
-Use [exec.md — v1](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md) as the only vision source. Do not copy it here.
+Use [exec.md — v2](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md) as the only vision source. Do not copy it here.
 
 ## Audience and message
 Draft only after proof; validate all promises against the current vision.
