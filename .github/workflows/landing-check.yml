@@ -23,6 +23,9 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          # A manual dispatch may select another branch. Always authenticate
+          # checkout of main, while push checks still test their exact SHA.
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.sha }}
       - name: Verify and select merged main commit for dispatcher invocation
         id: verify
         if: github.event_name == 'workflow_dispatch'
@@ -32,8 +35,9 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::Invalid merge SHA"; exit 1; }
-          git fetch --no-tags origin main
-          git merge-base --is-ancestor "$TARGET_SHA" origin/main || {
+          # Full-history checkout of main already contains its ancestors.
+          # Avoid a second unauthenticated fetch (broken in private repos).
+          git merge-base --is-ancestor "$TARGET_SHA" HEAD || {
             echo "::error::Requested SHA is not on main"; exit 1;
           }
           git checkout --detach "$TARGET_SHA"

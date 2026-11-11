@@ -47,3 +47,16 @@ test('direct pushes cannot attribute a failing landing check to an unrelated mer
   assert.equal(selectMergedPr([{ ...pr, merged_at: null }], 'merged-pr-sha'), null);
   assert.equal(selectMergedPr([{ ...pr, base: { ref: 'other' } }], 'merged-pr-sha'), null);
 });
+
+test('dispatch verifies a main ancestor using authenticated checkout, without a second fetch', () => {
+  const workflow = fs.readFileSync(path.join(__dirname, '../workflows/landing-check.yml'), 'utf8');
+  const checkout = workflow.split('- uses: actions/checkout@v4')[1]?.split('- name: Verify')[0];
+  const verify = workflow.split('- name: Verify and select merged main commit')[1]?.split('- name: Run repository smoke')[0];
+  assert.ok(checkout && verify, 'checkout and verification steps are present');
+  assert.match(checkout, /persist-credentials: false/);
+  assert.match(checkout, /fetch-depth: 0/);
+  assert.match(checkout, /ref: \$\{\{ github\.event_name == 'workflow_dispatch' && 'main' \\|\\| github\.sha \}\}/);
+  assert.doesNotMatch(verify, /\\bgit fetch\\b/);
+  assert.match(verify, /git merge-base --is-ancestor "\\$TARGET_SHA" HEAD/);
+  assert.match(verify, /git checkout --detach "\\$TARGET_SHA"/);
+});
