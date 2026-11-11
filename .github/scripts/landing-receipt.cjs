@@ -16,6 +16,10 @@ async function github(path, options = {}) {
   return response.status === 204 ? null : response.json();
 }
 function safe(s) { return String(s ?? '').replace(/[\r\n|]/g, ' ').slice(0, 500); }
+// Require the exact merge SHA: otherwise a direct push could be blamed on an unrelated PR.
+function selectMergedPr(prs, sha) {
+  return prs.find(p => p.merged_at && p.base?.ref === 'main' && p.merge_commit_sha === sha) || null;
+}
 async function main() {
   const repo = process.env.GITHUB_REPOSITORY;
   const sha = process.env.GITHUB_SHA;
@@ -28,8 +32,7 @@ async function main() {
   let lookupError = null;
   try {
     const prs = await github('/repos/' + repo + '/commits/' + sha + '/pulls?per_page=100');
-    pr = prs.find(p => p.merged_at && p.base?.ref === 'main' && p.merge_commit_sha === sha)
-      || prs.find(p => p.merged_at && p.base?.ref === 'main') || null;
+    pr = selectMergedPr(prs, sha);
     if (pr) {
       const detail = await github('/repos/' + repo + '/pulls/' + pr.number);
       chat = parseChatUrl(detail.body || '');
@@ -66,7 +69,8 @@ async function main() {
     }
   }
 }
-main().catch(e => {
+module.exports = { selectMergedPr };
+if (require.main === module) main().catch(e => {
   console.error('Landing receipt/reporting error:', e);
   fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '\nReceipt/reporting error: ' + String(e.message) + '\n');
   process.exitCode = 1;

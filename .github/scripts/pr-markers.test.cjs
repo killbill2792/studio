@@ -1,6 +1,9 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { selectMergedPr } = require('./landing-receipt.cjs');
 const { parseRepoMarker, parseChatUrl, validateRepo } = require('./pr-markers.cjs');
 
 test('matching repository and task pass', () => {
@@ -26,4 +29,21 @@ test('extracts optional real chat URL and rejects unrelated URLs', () => {
   assert.equal(parseChatUrl('<!-- aicafe-chat-url https://chatgpt.com/c/abc-123 -->'), 'https://chatgpt.com/c/abc-123');
   assert.equal(parseChatUrl('<!-- aicafe-chat-url https://chatgpt.com/g/project/c/abc -->'), 'https://chatgpt.com/g/project/c/abc');
   assert.equal(parseChatUrl('<!-- aicafe-chat-url https://evil.example/x -->'), null);
+});
+
+test('failed smoke exits nonzero before an always-run receipt can report it', () => {
+  const workflow = fs.readFileSync(path.join(__dirname, '../workflows/landing-check.yml'), 'utf8');
+  const smoke = workflow.split('name: Run repository smoke command')[1]?.split('name: Write receipt')[0];
+  assert.ok(smoke, 'landing smoke and receipt steps must exist');
+  assert.match(smoke, /echo "exit_code=\$result" >> "\$GITHUB_OUTPUT"/);
+  assert.match(smoke, /exit "\$result"/);
+  assert.match(workflow, /name: Write receipt and report only real failures\s+if: \$\{\{ always\(\)/);
+});
+
+test('direct pushes cannot attribute a failing landing check to an unrelated merged PR', () => {
+  const pr = { number: 17, merged_at: '2026-11-10T18:00:00Z', base: { ref: 'main' }, merge_commit_sha: 'merged-pr-sha' };
+  assert.equal(selectMergedPr([pr], 'unrelated-direct-push-sha'), null);
+  assert.equal(selectMergedPr([pr], 'merged-pr-sha'), pr);
+  assert.equal(selectMergedPr([{ ...pr, merged_at: null }], 'merged-pr-sha'), null);
+  assert.equal(selectMergedPr([{ ...pr, base: { ref: 'other' } }], 'merged-pr-sha'), null);
 });

@@ -46,6 +46,8 @@ jobs:
           result=$?
           cat "$RUNNER_TEMP/landing.log"
           echo "exit_code=$result" >> "$GITHUB_OUTPUT"
+          # Fail the smoke step itself; the always() receipt still runs and reports.
+          exit "$result"
       - name: Write receipt and report only real failures
         if: ${{ always() && (github.event_name != 'workflow_dispatch' || steps.verify.outcome == 'success') }}
         env:
@@ -54,6 +56,3 @@ jobs:
           LANDING_EXIT_CODE: ${{ steps.smoke.outputs.exit_code }}
           LANDING_LOG: ${{ runner.temp }}/landing.log
         run: node .github/scripts/landing-receipt.cjs
-      - name: Show failed smoke in post-merge Actions status (never a PR gate)
-        if: ${{ steps.smoke.outputs.exit_code != '0' }}
-        run: exit 1
