@@ -6,6 +6,7 @@
   "tasks": [
     {
       "id": "1",
+      "repo": "<owner>/<repository>",
       "title": "Short title",
       "goal": "What this PR must achieve",
       "edits": ["paths/this/task/may/write"],
