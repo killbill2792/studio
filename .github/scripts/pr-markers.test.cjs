@@ -55,8 +55,8 @@ test('dispatch verifies a main ancestor using authenticated checkout, without a 
   assert.ok(checkout && verify, 'checkout and verification steps are present');
   assert.match(checkout, /persist-credentials: false/);
   assert.match(checkout, /fetch-depth: 0/);
-  assert.match(checkout, /ref: \$\{\{ github\.event_name == 'workflow_dispatch' && 'main' \\|\\| github\.sha \}\}/);
-  assert.doesNotMatch(verify, /\\bgit fetch\\b/);
-  assert.match(verify, /git merge-base --is-ancestor "\\$TARGET_SHA" HEAD/);
-  assert.match(verify, /git checkout --detach "\\$TARGET_SHA"/);
+  assert.ok(checkout.includes("ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.sha }}"));
+  assert.ok(!verify.includes('git fetch --no-tags origin main'));
+  assert.ok(verify.includes('git merge-base --is-ancestor "$TARGET_SHA" HEAD'));
+  assert.ok(verify.includes('git checkout --detach "$TARGET_SHA"'));
 });
