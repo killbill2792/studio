@@ -8,3 +8,10 @@
 - GitHub Pages is public. **Never** include GitHub tokens, private dispatcher receipts, owner messages, raw chat URLs or personal data in `ledger.json`.
 - To publish: in Studio repo Settings → Pages, select **Deploy from a branch**, branch `main`, folder `/docs`. This must be enabled by the owner if not already configured; a PR alone does not activate hosting.
 - Do not let GitHub Pages status start tasks. A new Studio chat compares live GitHub PRs, records a decision and owner-approved task release; scope changes follow the Studio amendment process.
+
+## Evolving approved scope
+
+The initial task allowlist is not an immutable barrier. In-scope engineering refinements can be recorded on the coding PR. A material new feature, file group, architectural dependency, migration or acceptance condition must be reconciled into the approved Studio task and decisions via a short amendment PR. The final coding PR states `Scope revision: vN` and links the approved record. A merged-main proof references **actual changed paths + the final merged SHA**, never the superseded starting snapshot.
+
+- Each proof result appears in a **separate MVPStyli evidence PR** under `docs/studio/proofs/`. A failing test or unverified migration is explicit pending work, not silent scope hash deadlock.
+- A new Studio chat may suggest unrelated next work independently of a blocked proof; it must not falsely label the previous feature integrated.
