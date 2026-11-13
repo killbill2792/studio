@@ -1,11 +1,18 @@
 # Decision: Stylit Agent
 
+## Handoff — chat-owned step releases (2026-11-12)
+Owner direction: represent **each decision step** with its questions/answers, associated PRs and dependencies, plus a cross-step PR dependency overview. Executive/Product/Dev/Marketing discussions may occur in several chats; the approved repository record is authoritative. Once a step is finished, a new Studio chat checks live GitHub state and recommends the next step. **The dispatcher may observe and repair existing authorized PRs, but must not choose, approve or start the next task.**
+
+Why: the dispatcher holding task-order choices while stalled created unnecessary owner babysitting. Keeping decisions in chats and deterministic execution status in GitHub makes recovery and handoffs easier without another monitoring agent.
+
+Current step/PR map: [decision-board.md](decision-board.md). Setup PR: [MVPStyli #7](https://github.com/killbill2792/MVPStyli/pull/7), containing rules and CI checks; the separate dispatcher runtime is not yet installed or live. **No live/paid/secret/production authorization was granted.** This architecture decision is recorded here for owner review and becomes canonical only on merge of its Studio decision PR.
+
 ## Current vision and approvals
 The **only current vision** is [exec.md — v2](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md). The complete prior v1 text is marked **SUPERSEDED** under `archive/`; coding chats must never read archive/. All MVPStyli coding PRs must declare `Vision version: v2`; the required CI check rejects a missing or stale version.
 
 - **Approved by owner 2026-11-10, 12:13 PM PT: final interaction model.** It supersedes the prior chip sets, the three standalone Mix & Match/Color Analysis/Style Advice chip workflows, and previous proposals for new database tables.
 - Earlier owner approvals, preserved where compatible: Workflow 1, **10:18 AM PT** (Stylist); Workflow 2, **10:22 AM PT** (closet/three looks); Workflow 3, **10:36 AM PT** (tomorrow); Workflow 4, **10:40 AM PT** (find and buy); Workflow 5, **10:51 AM PT** (Elevate/Try On); Workflow 6 and one-screen, **11:05 AM PT** (Pod); outfit-first design, **11:24 AM PT**. All November 10, 2026.
-- This Studio PR is still **proposed and unmerged**. Only owner merge of Studio PR #2 authorizes the feature-start phase, not live, paid, App Store, secret, push, affiliate or checkout deployment. Do **not** merge on behalf of the owner.
+- Studio PR #2 was **merged on 2026-11-10**. Owner merge of Studio PR #2 authorizes the feature-start phase, not live, paid, App Store, secret, push, affiliate or checkout deployment. Do **not** merge on behalf of the owner.
 - Implementation repository: `killbill2792/MVPStyli` only; this Studio PR holds plans and tasks, never app code.
 
 ## Final interaction decisions
