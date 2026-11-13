@@ -5,7 +5,7 @@ Owner direction: represent **each decision step** with its questions/answers, as
 
 Why: the dispatcher holding task-order choices while stalled created unnecessary owner babysitting. Keeping decisions in chats and deterministic execution status in GitHub makes recovery and handoffs easier without another monitoring agent.
 
-Current step/PR map: [decision-board.md](decision-board.md). Setup PR: [MVPStyli #7](https://github.com/killbill2792/MVPStyli/pull/7), containing rules and CI checks; the separate dispatcher runtime is not yet installed or live. **No live/paid/secret/production authorization was granted.** This architecture decision is recorded here for owner review and becomes canonical only on merge of its Studio decision PR.
+Current step/PR map: [decision-board.md](decision-board.md). Public Muse-friendly [ledger JSON](../../../docs/ledger/ledger.json) and [ledger page](https://killbill2792.github.io/studio/ledger/) (hosting requires the repo Pages source to be configured). Setup PR: [MVPStyli #7](https://github.com/killbill2792/MVPStyli/pull/7), containing rules and CI checks; the separate dispatcher runtime is not yet installed or live. **No live/paid/secret/production authorization was granted.** This architecture decision is recorded here for owner review and becomes canonical only on merge of its Studio decision PR.
 
 ## Current vision and approvals
 The **only current vision** is [exec.md — v2](https://github.com/killbill2792/studio/blob/main/studio/ideas/stylit-agent/exec.md). The complete prior v1 text is marked **SUPERSEDED** under `archive/`; coding chats must never read archive/. All MVPStyli coding PRs must declare `Vision version: v2`; the required CI check rejects a missing or stale version.
