@@ -1,0 +1,317 @@
+{
+  "version": 1,
+  "generated_at": "2026-11-12",
+  "public": true,
+  "authority": {
+    "vision": "studio/ideas/stylit-agent/exec.md",
+    "decisions": "studio/ideas/stylit-agent/decision.md",
+    "tasks": "studio/ideas/stylit-agent/tasks.json",
+    "rule": "Studio chat explicitly releases the next task; this display never initiates work."
+  },
+  "steps": [
+    {
+      "id": "1",
+      "title": "Vision and product direction",
+      "description": "One Stylist screen, four chips and v2 source-of-truth",
+      "questions": [
+        "Which Shop experience is being replaced?",
+        "What is in scope and what must remain unchanged?"
+      ],
+      "decisions": [
+        "Current v2 vision lives only in exec.md",
+        "No new application data tables"
+      ],
+      "prs": [
+        {
+          "repo": "killbill2792/studio",
+          "number": 2
+        }
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "2",
+      "title": "Rules, reviews and integration safety",
+      "description": "Keep the next-work decision in chat; guard actual PR work",
+      "questions": [
+        "Which changes are authorized?",
+        "How are scope amendments approved and proven?",
+        "How will merged code be verified?"
+      ],
+      "decisions": [
+        "Studio chat chooses next task release; dispatcher does not",
+        "Require exact-head clean Codex review and green CI",
+        "Scope amendments can be approved during coding; record final scope in GitHub",
+        "Post-merge verification belongs to its own evidence PR; failure remains visible"
+      ],
+      "prs": [
+        {
+          "repo": "killbill2792/studio",
+          "number": 3
+        },
+        {
+          "repo": "killbill2792/studio",
+          "number": 4
+        },
+        {
+          "repo": "killbill2792/MVPStyli",
+          "number": 7
+        }
+      ],
+      "depends_on": [
+        "1"
+      ]
+    },
+    {
+      "id": "3",
+      "title": "Protected try-on and credits",
+      "description": "Independent feature work subject to its own release and migration gates",
+      "questions": [
+        "Is the protected try-on PR merged and verified?",
+        "Are required SQL migrations applied?",
+        "Does credits scope supersede earlier assumptions?"
+      ],
+      "decisions": [
+        "Do not overwrite protected try-on code before PR #4 is merged and proven",
+        "Credits/invite-code scope changes in PR #6 require a recorded amendment and final merged-head proof"
+      ],
+      "prs": [
+        {
+          "repo": "killbill2792/MVPStyli",
+          "number": 4
+        },
+        {
+          "repo": "killbill2792/MVPStyli",
+          "number": 6
+        }
+      ],
+      "depends_on": [
+        "2"
+      ]
+    },
+    {
+      "id": "4",
+      "title": "Next coding decisions",
+      "description": "New Studio chat chooses eligible PR work after checking live facts",
+      "questions": [
+        "Which prerequisites merged and passed integration?",
+        "Which task is the next useful release?",
+        "Is a follow-up PR needed for missing tests or migrations?"
+      ],
+      "decisions": [
+        "Not released automatically",
+        "Read task dependencies and verified GitHub evidence before choosing"
+      ],
+      "prs": [],
+      "depends_on": [
+        "2",
+        "3"
+      ]
+    }
+  ],
+  "tracked_prs": [
+    {
+      "repo": "killbill2792/studio",
+      "number": 2,
+      "step": "1",
+      "role": "Vision decision",
+      "tasks": [],
+      "depends_on": []
+    },
+    {
+      "repo": "killbill2792/studio",
+      "number": 3,
+      "step": "2",
+      "role": "Copyable safety templates",
+      "tasks": [],
+      "depends_on": []
+    },
+    {
+      "repo": "killbill2792/studio",
+      "number": 4,
+      "step": "2",
+      "role": "Decision and dependency record",
+      "tasks": [],
+      "depends_on": []
+    },
+    {
+      "repo": "killbill2792/MVPStyli",
+      "number": 7,
+      "step": "2",
+      "role": "Repository guardrails bootstrap",
+      "tasks": [
+        "0a",
+        "0b"
+      ],
+      "depends_on": [
+        {
+          "repo": "killbill2792/studio",
+          "number": 2
+        }
+      ]
+    },
+    {
+      "repo": "killbill2792/MVPStyli",
+      "number": 4,
+      "step": "3",
+      "role": "Protected try-on feature",
+      "tasks": [],
+      "depends_on": []
+    },
+    {
+      "repo": "killbill2792/MVPStyli",
+      "number": 6,
+      "step": "3",
+      "role": "Credits and creator codes",
+      "tasks": [],
+      "depends_on": []
+    }
+  ],
+  "tasks": [
+    {
+      "id": "0a",
+      "title": "Add rules-only MVPStyli AGENTS.md",
+      "depends_on": [],
+      "status": "planned",
+      "released": false,
+      "pr": {
+        "repo": "killbill2792/MVPStyli",
+        "number": 7
+      }
+    },
+    {
+      "id": "0b",
+      "title": "Enforce current vision version in PR CI",
+      "depends_on": [
+        "0a"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": {
+        "repo": "killbill2792/MVPStyli",
+        "number": 7
+      }
+    },
+    {
+      "id": "1",
+      "title": "Full MVPStyli brand revamp: shared tokens, unique motions and safe existing screens",
+      "depends_on": [
+        "0b"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": null
+    },
+    {
+      "id": "2",
+      "title": "Map Shop, garments and routes",
+      "depends_on": [
+        "1"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": null
+    },
+    {
+      "id": "3",
+      "title": "Final four-chip outfit-first Stylist shell",
+      "depends_on": [
+        "2"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": null
+    },
+    {
+      "id": "4",
+      "title": "Apply verified design system",
+      "depends_on": [
+        "3"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": null
+    },
+    {
+      "id": "5",
+      "title": "One continuous chat, contextual Style this and chat-driven advice",
+      "depends_on": [
+        "4"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": null
+    },
+    {
+      "id": "6",
+      "title": "Elevate visible look via PR #4 try-on",
+      "depends_on": [
+        "5"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": null
+    },
+    {
+      "id": "7",
+      "title": "Inline Pod-ready, Go live and live-vote cards",
+      "depends_on": [
+        "5"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": null
+    },
+    {
+      "id": "8",
+      "title": "Style my closet: three looks plus More card action",
+      "depends_on": [
+        "6",
+        "7"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": null
+    },
+    {
+      "id": "9",
+      "title": "Today's look chip and gated tomorrow scheduling without new tables",
+      "depends_on": [
+        "8"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": null
+    },
+    {
+      "id": "10",
+      "title": "Find & buy, contextual Fit for you and Buy event in chat",
+      "depends_on": [
+        "9"
+      ],
+      "status": "planned",
+      "released": false,
+      "pr": null
+    }
+  ],
+  "merge_order": [
+    "0a",
+    "0b",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "7",
+    "6",
+    "8",
+    "9",
+    "10"
+  ],
+  "notices": [
+    "This is a public metadata view: no private ledger, credentials, ChatGPT conversation URLs, or user data.",
+    "PR states are fetched live from public GitHub when this page loads; they are unknown if fetching fails.",
+    "Scope may be amended during development only with an auditable owner decision; integration checks run against the final merged SHA.",
+    "Merged is not automatically integration-proven. A separate proof PR records passing checks, gaps and any required migrations."
+  ]
+}
