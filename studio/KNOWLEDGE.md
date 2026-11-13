@@ -16,7 +16,7 @@ This file is the front door. Any agent (ChatGPT, Grok Bot, or a later one) reads
 - An idea: `studio/<product>/ideas/<idea>/` — `exec.md`, `product.md`, `dev.md`, `marketing.md`, `decision.md`, `tasks.json`
 - Copy idea files from `studio/templates/idea/`
 - Personas: `studio/templates/personas/`
-- Read-only PR/decision index for Muse: [public ledger data](../../docs/ledger/ledger.json) and [GitHub Pages ledger](https://killbill2792.github.io/studio/ledger/) (available only after Pages is configured). Never store credentials/chat URLs there.
+- Read-only PR/decision index for Muse: [public ledger data](../docs/ledger/ledger.json) and [GitHub Pages ledger](https://killbill2792.github.io/studio/ledger/) (available only after Pages is configured). Never store credentials/chat URLs there.
 - Step-by-step decision boards: `studio/<product>/ideas/<idea>/decision-board.md` or the matching existing idea path; each board links decision questions, answers, PRs and dependencies. Separate role chats can contribute, but Studio consolidates one record.
 
 ## Locked rules
